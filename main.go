@@ -9,7 +9,7 @@ import (
 
 	"vps-provider/api"
 	"vps-provider/config"
-	"vps-provider/storage"
+	"vps-provider/storage/mysql"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/spf13/viper"
@@ -34,7 +34,7 @@ func main() {
 		logging.SetDebugLogging()
 	}
 
-	if err := storage.Init(&cfg); err != nil {
+	if err := mysql.Init(&cfg); err != nil {
 		log.Fatalf("initital: %v\n", err)
 	}
 

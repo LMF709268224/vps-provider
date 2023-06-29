@@ -1,0 +1,10 @@
+package mysql
+
+var cUsersTable = `
+    CREATE TABLE if not exists %s (
+		uuid          VARCHAR(128) NOT NULL,
+		user_name     VARCHAR(128) NOT NULL,
+		pass_hash     VARCHAR(128) NOT NULL,
+		created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (uuid)
+	) ENGINE=InnoDB COMMENT='user info';`
