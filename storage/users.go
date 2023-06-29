@@ -24,7 +24,7 @@ func ResetPassword(ctx context.Context, passHash, username string) error {
 func GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	var out types.User
 	if err := DB.QueryRowxContext(ctx, fmt.Sprintf(
-		`SELECT * FROM %s WHERE user_name = ?`, tableNameUser), username,
+		`SELECT uuid,user_name,pass_hash FROM %s WHERE user_name = ?`, tableNameUser), username,
 	).StructScan(&out); err != nil {
 		return nil, err
 	}

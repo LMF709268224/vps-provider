@@ -8,7 +8,7 @@ type User struct {
 	// ID string `db:"user_id" json:"user_id"`
 	UUID string `db:"uuid" json:"uuid"`
 	// Avatar     string    `db:"avatar" json:"avatar"`
-	UserName string `db:"user_name" json:"username"`
+	UserName string `db:"user_name" json:"user_name"`
 	// VerifyCode string    `db:"verify_code" json:"verify_code"`
 	PassHash string `db:"pass_hash" json:"pass_hash"`
 	// UserEmail string    `db:"user_email" json:"user_email"`

@@ -20,8 +20,8 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 	if err != nil {
 		log.Fatalf("authMiddleware.MiddlewareInit: %v", err)
 	}
-
 	apiV1.POST("/register", UserRegister)
+	apiV1.Use(MiddlewareRole)
 	apiV1.POST("/password_reset", PasswordRest)
 	apiV1.POST("/login", authMiddleware.LoginHandler)
 	apiV1.POST("/logout", authMiddleware.LogoutHandler)
