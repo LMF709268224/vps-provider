@@ -9,7 +9,7 @@ import (
 
 var log = logging.Logger("api")
 
-func ConfigRouter(router *gin.Engine, cfg config.Config) {
+func configRouter(router *gin.Engine, cfg config.Config) {
 	apiV1 := router.Group("/api/v1")
 	authMiddleware, err := jwtGinMiddleware(cfg.SecretKey)
 	if err != nil {

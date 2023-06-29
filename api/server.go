@@ -25,7 +25,9 @@ func NewServer(cfg config.Config) (*Server, error) {
 		MaxAge:           12 * time.Hour,
 		AllowAllOrigins:  true,
 	}))
-	ConfigRouter(router, cfg)
+
+	configRouter(router, cfg)
+
 	s := &Server{
 		cfg:    cfg,
 		router: router,

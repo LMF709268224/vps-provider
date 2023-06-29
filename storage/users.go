@@ -4,51 +4,39 @@ import (
 	"context"
 	"fmt"
 
-	"vps-provider/utils"
+	"vps-provider/types"
 )
 
-var tableNameUser = "users"
-
-func CreateUser(ctx context.Context, user *utils.User) error {
+func CreateUser(ctx context.Context, user *types.User) error {
 	_, err := DB.NamedExecContext(ctx, fmt.Sprintf(
-		`INSERT INTO %s (uuid, username, pass_hash, user_email, address, role)
-			VALUES (:uuid, :username, :pass_hash, :user_email, :address, :role);`, tableNameUser,
+		`INSERT INTO %s (uuid, user_name, pass_hash)
+			VALUES (:uuid, :user_name, :pass_hash);`, tableNameUser,
 	), user)
 	return err
 }
 
 func ResetPassword(ctx context.Context, passHash, username string) error {
-	_, err := DB.DB.ExecContext(ctx, fmt.Sprintf(
-		`UPDATE %s SET pass_hash = '%s', updated_at = now() WHERE username = '%s'`, tableNameUser, passHash, username))
+	_, err := DB.ExecContext(ctx, fmt.Sprintf(
+		`UPDATE %s SET pass_hash = '%s', WHERE user_name = '%s'`, tableNameUser, passHash, username))
 	return err
 }
 
-func GetUserByUsername(ctx context.Context, username string) (*utils.User, error) {
-	var out utils.User
+func GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	var out types.User
 	if err := DB.QueryRowxContext(ctx, fmt.Sprintf(
-		`SELECT * FROM %s WHERE username = ?`, tableNameUser), username,
+		`SELECT * FROM %s WHERE user_name = ?`, tableNameUser), username,
 	).StructScan(&out); err != nil {
 		return nil, err
 	}
 	return &out, nil
 }
 
-func GetUserByUserUUID(ctx context.Context, UUID string) (*utils.User, error) {
-	var out utils.User
+func GetUserByUserUUID(ctx context.Context, UUID string) (*types.User, error) {
+	var out types.User
 	if err := DB.QueryRowxContext(ctx, fmt.Sprintf(
 		`SELECT * FROM %s WHERE uuid = ?`, tableNameUser), UUID,
 	).StructScan(&out); err != nil {
 		return nil, err
 	}
 	return &out, nil
-}
-
-func GetUserIds(ctx context.Context) ([]string, error) {
-	queryStatement := fmt.Sprintf(`SELECT username as user_id FROM %s;`, tableNameUser)
-	var out []string
-	err := DB.SelectContext(ctx, &out, queryStatement)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }

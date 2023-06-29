@@ -1,21 +1,24 @@
-package utils
+package email
 
 import (
 	"fmt"
-	"github.com/jordan-wright/email"
 	"net/smtp"
 	"net/textproto"
+
 	"vps-provider/config"
+
+	"github.com/jordan-wright/email"
 )
 
-type EmailData struct {
+type emailData struct {
 	SendTo  string
 	Subject string
 	Tittle  string
 	Content string
 }
 
-func SendEmail(cfg config.EmailConfig, data EmailData) error {
+func sendEmail(data emailData) error {
+	cfg := config.Cfg.Email
 	message := &email.Email{
 		To:      []string{data.SendTo},
 		From:    fmt.Sprintf("%s <%s>", cfg.Name, cfg.Username),

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"vps-provider/utils"
+	err "vps-provider/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -17,9 +17,9 @@ func respJSON(v interface{}) gin.H {
 }
 
 func respError(e error) gin.H {
-	var genericError utils.GenericError
+	var genericError err.GenericError
 	if !errors.As(e, &genericError) {
-		genericError = utils.ErrUnknown
+		genericError = err.ErrUnknown
 	}
 
 	return gin.H{

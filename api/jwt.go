@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"vps-provider/errors"
 	"vps-provider/storage"
-	"vps-provider/utils"
+	"vps-provider/types"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -19,9 +20,8 @@ const (
 )
 
 type login struct {
-	Username   string `form:"username" json:"username" binding:"required"`
-	Password   string `form:"password" json:"password" binding:"required"`
-	VerifyCode string `form:"verify_code" json:"verify_code" binding:"required"`
+	Username string `form:"username" json:"username" binding:"required"`
+	Password string `form:"password" json:"password" binding:"required"`
 }
 
 type loginResponse struct {
@@ -39,17 +39,17 @@ func jwtGinMiddleware(secretKey string) (*jwt.GinJWTMiddleware, error) {
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*utils.User); ok {
+			if v, ok := data.(*types.User); ok {
 				return jwt.MapClaims{
-					identityKey: v.Uuid,
+					identityKey: v.UUID,
 				}
 			}
 			return jwt.MapClaims{}
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
-			return &utils.User{
-				Uuid: claims[identityKey].(string),
+			return &types.User{
+				UUID: claims[identityKey].(string),
 			}
 		},
 		LoginResponse: func(c *gin.Context, code int, token string, expire time.Time) {
@@ -69,24 +69,16 @@ func jwtGinMiddleware(secretKey string) (*jwt.GinJWTMiddleware, error) {
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			var loginParams login
 			loginParams.Username = c.Query("username")
-			loginParams.VerifyCode = c.Query("verify_code")
 			loginParams.Password = c.Query("password")
-			if loginParams.Username == "" {
-				return "", jwt.ErrMissingLoginValues
-			}
-			if loginParams.VerifyCode == "" && loginParams.Password == "" {
+			if loginParams.Username == "" || loginParams.Password == "" {
 				return "", jwt.ErrMissingLoginValues
 			}
 			userID := loginParams.Username
 			password := loginParams.Password
-			user, err := loginByPassword(c.Request.Context(), userID, password)
-			if err != nil {
-				return nil, err
-			}
-			return user, nil
+			return loginByPassword(c.Request.Context(), userID, password)
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			if v, ok := data.(utils.User); ok && v.Username == "admin" {
+			if v, ok := data.(types.User); ok && v.UserName == "admin" {
 				return true
 			}
 
@@ -110,13 +102,13 @@ func loginByPassword(ctx context.Context, username, password string) (interface{
 	user, err := storage.GetUserByUsername(ctx, username)
 	if err != nil {
 		log.Errorf("get user by username: %v", err)
-		return nil, utils.ErrUserNotFound
+		return nil, errors.ErrUserNotFound
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PassHash), []byte(password)); err != nil {
 		log.Errorf("can't compare hash %s ans password %s: %v", user.PassHash, password, err)
-		return nil, utils.ErrInvalidPassword
+		return nil, errors.ErrInvalidPassword
 	}
 
-	return &utils.User{Uuid: user.Uuid, Username: user.Username, Role: user.Role}, nil
+	return &types.User{UserName: user.UserName}, nil
 }

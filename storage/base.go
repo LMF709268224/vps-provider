@@ -9,11 +9,18 @@ import (
 	"vps-provider/config"
 
 	_ "github.com/go-sql-driver/mysql"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/jmoiron/sqlx"
 )
 
+var log = logging.Logger("storage")
+
 // DB reference to database
 var DB *sqlx.DB
+
+const (
+	tableNameUser = "users"
+)
 
 const (
 	maxOpenConnections = 60
@@ -38,17 +45,29 @@ func Init(cfg *config.Config) error {
 	db.SetConnMaxIdleTime(connMaxIdleTime * time.Second)
 
 	DB = db
-	return nil
+
+	return initTables()
 }
 
-type QueryOption struct {
-	Page       int    `json:"page"`
-	PageSize   int    `json:"page_size"`
-	Order      string `json:"order"`
-	OrderField string `json:"order_field"`
-	StartTime  string `json:"start_time"`
-	EndTime    string `json:"end_time" `
-	UserID     string `json:"user_id"`
+// initializes data tables.
+func initTables() error {
+	// init table
+	tx, err := DB.Beginx()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err = tx.Rollback()
+		if err != nil && err != sql.ErrTxDone {
+			log.Errorf("InitTables Rollback err:%s", err.Error())
+		}
+	}()
+
+	// Execute table creation statements
+	tx.MustExec(fmt.Sprintf(cUsersTable, tableNameUser))
+
+	return tx.Commit()
 }
 
 func GetQueryDataList(sqlClause string, args ...interface{}) ([]map[string]string, error) {
