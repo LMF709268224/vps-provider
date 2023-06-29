@@ -112,3 +112,14 @@ func loginByPassword(ctx context.Context, username, password string) (interface{
 
 	return &types.User{UserName: user.UserName}, nil
 }
+
+func middlewareRole(c *gin.Context) {
+	// todo handle role
+	ok := true
+	if !ok {
+		c.JSON(http.StatusOK, respError(errors.ErrNameExists))
+		c.Abort()
+		return
+	}
+	c.Next()
+}

@@ -26,7 +26,7 @@ func GetUserInfoHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, respJSON(user))
 }
 
-func UserRegister(c *gin.Context) {
+func userRegisterHandler(c *gin.Context) {
 	userInfo := &types.User{}
 	userInfo.UserName = c.Query("username")
 	passStr := c.Query("password")
@@ -59,19 +59,7 @@ func UserRegister(c *gin.Context) {
 	}))
 }
 
-func MiddlewareRole(c *gin.Context) {
-	// todo handle role
-	var ok bool
-	ok = true
-	if !ok {
-		c.JSON(http.StatusOK, respError(errors.ErrNameExists))
-		c.Abort()
-		return
-	}
-	c.Next()
-}
-
-func PasswordRest(c *gin.Context) {
+func resetPasswordHandler(c *gin.Context) {
 	userInfo := &types.User{}
 	userInfo.UserName = c.Query("username")
 	passStr := c.Query("password")
