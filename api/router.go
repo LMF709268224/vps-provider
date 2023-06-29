@@ -21,11 +21,10 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 		log.Fatalf("authMiddleware.MiddlewareInit: %v", err)
 	}
 
-	storage := apiV1.Group("/storage")
-	storage.POST("/register", UserRegister)
-	storage.POST("/password_reset", PasswordRest)
-	storage.POST("/login", authMiddleware.LoginHandler)
-	storage.POST("/logout", authMiddleware.LogoutHandler)
-	storage.Use(authMiddleware.MiddlewareFunc())
-	storage.GET("/refresh_token", authMiddleware.RefreshHandler)
+	apiV1.POST("/register", UserRegister)
+	apiV1.POST("/password_reset", PasswordRest)
+	apiV1.POST("/login", authMiddleware.LoginHandler)
+	apiV1.POST("/logout", authMiddleware.LogoutHandler)
+	apiV1.Use(authMiddleware.MiddlewareFunc())
+	apiV1.GET("/refresh_token", authMiddleware.RefreshHandler)
 }
