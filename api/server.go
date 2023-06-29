@@ -1,11 +1,12 @@
 package api
 
 import (
+	"time"
+
+	"vps-provider/config"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"time"
-	"vps-provider/config"
-	"vps-provider/utils"
 )
 
 type Server struct {
@@ -13,6 +14,7 @@ type Server struct {
 	router *gin.Engine
 }
 
+// NewServer new a router server
 func NewServer(cfg config.Config) (*Server, error) {
 	gin.SetMode(cfg.Mode)
 	router := gin.Default()
@@ -40,21 +42,4 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Close() {
-}
-
-func (s *Server) sendEmail(sendTo string, registrations []string) error {
-	var EData utils.EmailData
-	EData.Subject = "[Application]: Your Device Info"
-	EData.Tittle = "please check your device id "
-	EData.SendTo = sendTo
-	EData.Content = "<h1>Your Device ID ：</h1>\n"
-	for _, registration := range registrations {
-		EData.Content += registration + "<br>"
-	}
-
-	err := utils.SendEmail(s.cfg.Email, EData)
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -1,9 +1,10 @@
 package api
 
 import (
+	"vps-provider/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	err "vps-provider/core/errors"
 )
 
 type JsonObject map[string]interface{}
@@ -16,9 +17,9 @@ func respJSON(v interface{}) gin.H {
 }
 
 func respError(e error) gin.H {
-	var genericError err.GenericError
+	var genericError utils.GenericError
 	if !errors.As(e, &genericError) {
-		genericError = err.ErrUnknown
+		genericError = utils.ErrUnknown
 	}
 
 	return gin.H{

@@ -1,14 +1,15 @@
-package dao
+package storage
 
 import (
 	"context"
 	"fmt"
-	"vps-provider/core/generated/model"
+
+	"vps-provider/utils"
 )
 
 var tableNameUser = "users"
 
-func CreateUser(ctx context.Context, user *model.User) error {
+func CreateUser(ctx context.Context, user *utils.User) error {
 	_, err := DB.NamedExecContext(ctx, fmt.Sprintf(
 		`INSERT INTO %s (uuid, username, pass_hash, user_email, address, role)
 			VALUES (:uuid, :username, :pass_hash, :user_email, :address, :role);`, tableNameUser,
@@ -22,8 +23,8 @@ func ResetPassword(ctx context.Context, passHash, username string) error {
 	return err
 }
 
-func GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	var out model.User
+func GetUserByUsername(ctx context.Context, username string) (*utils.User, error) {
+	var out utils.User
 	if err := DB.QueryRowxContext(ctx, fmt.Sprintf(
 		`SELECT * FROM %s WHERE username = ?`, tableNameUser), username,
 	).StructScan(&out); err != nil {
@@ -32,8 +33,8 @@ func GetUserByUsername(ctx context.Context, username string) (*model.User, error
 	return &out, nil
 }
 
-func GetUserByUserUUID(ctx context.Context, UUID string) (*model.User, error) {
-	var out model.User
+func GetUserByUserUUID(ctx context.Context, UUID string) (*utils.User, error) {
+	var out utils.User
 	if err := DB.QueryRowxContext(ctx, fmt.Sprintf(
 		`SELECT * FROM %s WHERE uuid = ?`, tableNameUser), UUID,
 	).StructScan(&out); err != nil {

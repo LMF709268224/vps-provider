@@ -1,9 +1,10 @@
 package api
 
 import (
+	"vps-provider/config"
+
 	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
-	"vps-provider/config"
 )
 
 var log = logging.Logger("api")
@@ -21,7 +22,6 @@ func ConfigRouter(router *gin.Engine, cfg config.Config) {
 	}
 
 	storage := apiV1.Group("/storage")
-	storage.POST("/get_verify_code", GetVerifyCodeHandle)
 	storage.POST("/register", UserRegister)
 	storage.POST("/password_reset", PasswordRest)
 	storage.POST("/login", authMiddleware.LoginHandler)

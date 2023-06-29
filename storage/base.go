@@ -1,23 +1,19 @@
-package dao
+package storage
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"github.com/go-redis/redis/v9"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	"strings"
 	"time"
+
 	"vps-provider/config"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 )
 
-var (
-	// DB reference to database
-	DB *sqlx.DB
-	// Cache  redis caching instance
-	Cache *redis.Client
-)
+// DB reference to database
+var DB *sqlx.DB
 
 const (
 	maxOpenConnections = 60
@@ -41,17 +37,7 @@ func Init(cfg *config.Config) error {
 	db.SetMaxIdleConns(maxIdleConnections)
 	db.SetConnMaxIdleTime(connMaxIdleTime * time.Second)
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     cfg.RedisAddr,
-		Password: cfg.RedisPassword,
-	})
-	_, err = client.Ping(context.Background()).Result()
-	if err != nil {
-		return err
-	}
-
 	DB = db
-	Cache = client
 	return nil
 }
 

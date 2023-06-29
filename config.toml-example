@@ -1,9 +1,7 @@
-  Mode = "debug"
+Mode = "debug"
 ApiListen = ":8080"
 DatabaseURL = "root:example@tcp(localhost:3306)/example?charset=utf8mb4&parseTime=True&loc=Local"
 SecretKey = "test"
-RedisAddr = "127.0.0.1:6379"
-RedisPassword = ""
 SchedulerFromDB = false
 
 [AdminScheduler]
