@@ -1,10 +1,12 @@
 package config
 
+// Cfg config
 var Cfg Config
 
+// Config server config
 type Config struct {
 	Mode          string
-	ApiListen     string
+	APIListen     string
 	DatabaseURL   string
 	SecretKey     string
 	RedisAddr     string
@@ -12,6 +14,7 @@ type Config struct {
 	Email         EmailConfig
 }
 
+// EmailConfig email
 type EmailConfig struct {
 	Name     string
 	SMTPHost string

@@ -15,7 +15,7 @@ import (
 	"vps-provider/errors"
 )
 
-func GetUserInfoHandler(c *gin.Context) {
+func getUserInfoHandler(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
 	uuid := claims[identityKey].(string)
 	user, err := mysql.GetUserByUserUUID(c.Request.Context(), uuid)
@@ -30,13 +30,12 @@ func userRegisterHandler(c *gin.Context) {
 	userInfo := &types.User{}
 	userInfo.UserName = c.Query("username")
 	passStr := c.Query("password")
-	_, err := mysql.GetUserByUsername(c.Request.Context(), userInfo.UserName)
+	_, err := mysql.GetUserByUserName(c.Request.Context(), userInfo.UserName)
 	if err == nil {
 		c.JSON(http.StatusOK, respError(errors.ErrNameExists))
 		return
 	}
 	if err != nil && err != sql.ErrNoRows {
-		log.Errorf("UserRegister : %s", err.Error())
 		c.JSON(http.StatusOK, respError(errors.ErrInvalidParams))
 		return
 	}
@@ -48,13 +47,13 @@ func userRegisterHandler(c *gin.Context) {
 	}
 	userInfo.UUID = uuid.NewString()
 	userInfo.PassHash = string(passHash)
-	err = mysql.CreateUser(c.Request.Context(), userInfo)
+	err = mysql.SaveUserInfo(c.Request.Context(), userInfo)
 	if err != nil {
 		log.Errorf("create user : %v", err)
 		c.JSON(http.StatusOK, respError(errors.ErrInternalServer))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"msg": "success",
 	}))
 }
@@ -63,7 +62,7 @@ func resetPasswordHandler(c *gin.Context) {
 	userInfo := &types.User{}
 	userInfo.UserName = c.Query("username")
 	passStr := c.Query("password")
-	_, err := mysql.GetUserByUsername(c.Request.Context(), userInfo.UserName)
+	_, err := mysql.GetUserByUserName(c.Request.Context(), userInfo.UserName)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusOK, respError(errors.ErrNameNotExists))
 		return
@@ -85,7 +84,7 @@ func resetPasswordHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, respError(errors.ErrInternalServer))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"msg": "success",
 	}))
 }

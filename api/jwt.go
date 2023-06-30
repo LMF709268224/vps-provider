@@ -99,7 +99,7 @@ func jwtGinMiddleware(secretKey string) (*jwt.GinJWTMiddleware, error) {
 }
 
 func loginByPassword(ctx context.Context, username, password string) (interface{}, error) {
-	user, err := mysql.GetUserByUsername(ctx, username)
+	user, err := mysql.GetUserByUserName(ctx, username)
 	if err != nil {
 		log.Errorf("get user by username: %v", err)
 		return nil, errors.ErrUserNotFound

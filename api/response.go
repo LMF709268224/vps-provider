@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type JsonObject map[string]interface{}
+type jsonObject map[string]interface{}
 
 func respJSON(v interface{}) gin.H {
 	return gin.H{
