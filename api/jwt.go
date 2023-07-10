@@ -1,17 +1,13 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"time"
 
-	"vps-provider/errors"
-	"vps-provider/storage/mysql"
 	"vps-provider/types"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -73,9 +69,8 @@ func jwtGinMiddleware(secretKey string) (*jwt.GinJWTMiddleware, error) {
 			if loginParams.Username == "" || loginParams.Password == "" {
 				return "", jwt.ErrMissingLoginValues
 			}
-			userID := loginParams.Username
-			password := loginParams.Password
-			return loginByPassword(c.Request.Context(), userID, password)
+
+			return "", jwt.ErrMissingLoginValues
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			if v, ok := data.(types.User); ok && v.UserName == "admin" {
@@ -96,30 +91,4 @@ func jwtGinMiddleware(secretKey string) (*jwt.GinJWTMiddleware, error) {
 
 		TimeFunc: time.Now,
 	})
-}
-
-func loginByPassword(ctx context.Context, username, password string) (interface{}, error) {
-	user, err := mysql.GetUserByUserName(ctx, username)
-	if err != nil {
-		log.Errorf("get user by username: %v", err)
-		return nil, errors.ErrUserNotFound
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PassHash), []byte(password)); err != nil {
-		log.Errorf("can't compare hash %s ans password %s: %v", user.PassHash, password, err)
-		return nil, errors.ErrInvalidPassword
-	}
-
-	return &types.User{UserName: user.UserName}, nil
-}
-
-func middlewareRole(c *gin.Context) {
-	// todo handle role
-	ok := true
-	if !ok {
-		c.JSON(http.StatusOK, respError(errors.ErrNameExists))
-		c.Abort()
-		return
-	}
-	c.Next()
 }

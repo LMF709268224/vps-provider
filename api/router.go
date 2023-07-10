@@ -65,8 +65,6 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 	}
 
 	apiV1.POST("/register", userRegisterHandler)
-	apiV1.Use(middlewareRole)
-	apiV1.POST("/password_reset", resetPasswordHandler)
 	apiV1.POST("/login", authMiddleware.LoginHandler)
 	apiV1.POST("/logout", authMiddleware.LogoutHandler)
 	apiV1.Use(authMiddleware.MiddlewareFunc())

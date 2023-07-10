@@ -9,7 +9,6 @@ import (
 
 	"vps-provider/api"
 	"vps-provider/config"
-	"vps-provider/storage/mysql"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/spf13/viper"
@@ -32,10 +31,6 @@ func main() {
 	config.Cfg = cfg
 	if cfg.Mode == "debug" {
 		logging.SetDebugLogging()
-	}
-
-	if err := mysql.Init(&cfg); err != nil {
-		log.Fatalf("initital: %v\n", err)
 	}
 
 	srv, err := api.NewServer(cfg)

@@ -14,6 +14,7 @@ const (
 	NameExists
 	NameNotExists
 
+	Success     = 0
 	Unknown     = -1
 	GenericCode = 1
 )
@@ -27,6 +28,7 @@ var (
 	ErrPassWord        = newError(PassWordNotAllowed, "password not allowed")
 	ErrNameExists      = newError(NameExists, "the name Exists")
 	ErrNameNotExists   = newError(NameNotExists, "the name not exists")
+	ErrSuccess         = newError(Success, "success")
 )
 
 type GenericError struct {
