@@ -10,4 +10,3 @@ func userRegisterHandler(c *gin.Context) {
 
 	// c.JSON(http.StatusOK, respError(err))
 }
-

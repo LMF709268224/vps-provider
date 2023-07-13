@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Homepage</title>
+</head>
+
+<body>
+    <select name="mySelect">
+        {{range .Options}}
+        <option value="{{.}}">{{.}}</option>
+        {{end}}
+    </select>
+    <form method="POST" action="/api/v1/action">
+        <button type="submit">Click me!</button>
+    </form>
+</body>
+
+</html>

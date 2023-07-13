@@ -1,147 +1,64 @@
 package blockchain
 
 import (
-	"context"
-	"encoding/json"
+	"crypto/ecdsa"
+	"fmt"
+	"math/big"
 
-	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/go-state-types/big"
-	"github.com/filecoin-project/go-state-types/builtin"
-	"github.com/filecoin-project/lotus/chain/types"
-	logging "github.com/ipfs/go-log/v2"
-	"github.com/myxtype/filecoin-client"
-	localfilecointypes "github.com/myxtype/filecoin-client/types"
-	"github.com/shopspring/decimal"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/xerrors"
 )
 
-var log = logging.Logger("blockchain")
+func SendMessage() error {
+	address := common.HexToAddress("0x61c6E61e8a5DC4117f4Aa72Bfa077b8B166b4a83")
+	privateKeyStr := "3c3633bfaa3f8cfc2df9169d763eda6a8fb06d632e553f969f9dd2edd64dd11b"
+	url := "http://183.60.189.250:1451/rpc/v1"
 
-const (
-	lotusAddress = "http://183.60.189.250:1451/rpc/v1"
-	authToken    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.3cIC5RdwN2xXPgBY6fkJGUkfVeCAnZVo3zVUls1oDes"
-)
-
-// MpoolPush 提交消息
-func MpoolPush(body []byte) (string, error) {
-	s := &localfilecointypes.SignedMessage{}
-	err := json.Unmarshal(body, s)
+	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Errorf("MpoolPush Unmarshal error: %v", err)
-		return "", err
+		return xerrors.Errorf("Dial err:%s", err.Error())
 	}
 
-	// log.Infoln("url : ", url)
-	client := filecoin.NewClient(lotusAddress, authToken)
-
-	mid, err := client.MpoolPush(context.Background(), s)
+	o, err := NewOrder(address, client)
 	if err != nil {
-		log.Errorf("MpoolPush ---- err : %v", err)
-		return "", err
+		return xerrors.Errorf("NewOrder err:%s", err.Error())
 	}
-	log.Infof("MpoolPush success cid : %v", mid)
-	return mid.String(), nil
+
+	privateKey, err := crypto.HexToECDSA(privateKeyStr)
+	if err != nil {
+		return xerrors.Errorf("HexToECDSA err:%s", err.Error())
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return xerrors.Errorf("publicKey err:%s", err.Error())
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31415926))
+	if err != nil {
+		return xerrors.Errorf("NewKeyedTransactorWithChainID err:%s", err.Error())
+	}
+	auth.GasLimit = uint64(3000000)
+	auth.From = fromAddress
+
+	tr, err := o.PlaceOrder(auth, big.NewInt(100), big.NewInt(10235))
+	if err != nil {
+		return xerrors.Errorf("PlaceOrder err:%s", err.Error())
+	}
+
+	fmt.Println(tr)
+	return nil
 }
 
-// ParseFIL Parse FIL
-func ParseFIL(value string) (big.Int, error) {
-	f, err := types.ParseFIL(value)
-	if err != nil {
-		return big.Int{}, err
-	}
+// [第三方支付ID]VPSOrder
+// []
 
-	amt := abi.TokenAmount(f)
-
-	return amt, nil
-}
-
-// MakeMessage 构建message
-func MakeMessage(info Message, nonce uint64) (*localfilecointypes.Message, uint64, error) {
-	from, err := address.NewFromString(info.MFrom)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	to, err := address.NewFromString(info.MTo)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	value := info.Value + "afil"
-	val, err := ParseFIL(value)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	client := filecoin.NewClient(lotusAddress, authToken)
-
-	// 获取nonce
-	if nonce == 0 {
-		nonce, err = client.MpoolGetNonce(context.Background(), from)
-		if err != nil {
-			// log.Printf("MpoolPush MpoolGetNonce err : %v", err)
-			a, err := client.StateGetActor(context.Background(), from, nil)
-			if err != nil {
-				log.Errorf("MpoolPush StateGetActor err :%v\n", err)
-				return nil, 0, err
-			}
-			nonce = a.Nonce + 1
-		}
-	}
-	log.Infof("MpoolPush val:%v,nonce:%v", val, nonce)
-
-	msg := &localfilecointypes.Message{
-		Version:    0,
-		To:         to,
-		From:       from,
-		Nonce:      nonce,
-		Value:      val,
-		GasLimit:   0,
-		GasFeeCap:  abi.NewTokenAmount(0),
-		GasPremium: abi.NewTokenAmount(0),
-		Method:     uint64(builtin.MethodSend),
-		Params:     nil,
-	}
-	// 默认 最大手续费0.0001 FIL 100000 nanoF 100000000000000 aF
-	maxFee := filecoin.FromFil(decimal.NewFromFloat(0.0001))
-
-	if info.GasLimit != "" && info.GasLimit != "0" {
-		// 可接受手续费上限 单位:nanoFIL
-		maxNano, err := decimal.NewFromString(info.GasLimit)
-		if err != nil {
-			log.Errorf("GasLimit to decinak err : %v", err)
-			return nil, 0, err
-		}
-
-		// 手续费上限 从nanoFIL 转成 FIL
-		maxFIL := maxNano.Div(decimal.NewFromFloat(float64(1000000000)))
-		// 手续费上限 从 FIL 转成 aFIL
-		maxFee = filecoin.FromFil(maxFIL)
-	}
-	// log.Infof("maxNano:%s,\nmaxFIL:%v,\nmaxFee:%v\n", maxNano, maxFIL, maxFee)
-
-	// 估算GasLimit
-	msg, err = client.GasEstimateMessageGas(context.Background(), msg, &localfilecointypes.MessageSendSpec{MaxFee: maxFee}, nil)
-	if err != nil {
-		log.Errorf("from:%s \nto:%s\n , MpoolPush GasEstimateMessageGas err : %v", from, to, err)
-		return nil, 0, err
-	}
-
-	gas := msg.GasLimit * msg.GasFeeCap.Int64()
-	gnano := decimal.NewFromFloat(float64(gas)).Div(decimal.NewFromFloat(float64(1000000000)))
-	log.Infof("估算gas :%v nanoFIL", gnano)
-
-	return msg, nonce, nil
-}
-
-// Message 待确认交易表
-type Message struct {
-	TransID  int64  `json:"column:trans_id"` // 订单ID
-	ID       int64  `gorm:"column:id"`
-	MTo      string `gorm:"column:mto"`      // to
-	MFrom    string `gorm:"column:mfrom"`    // from
-	Value    string `gorm:"column:value"`    // 交易值
-	GasLimit string `gorm:"column:gaslimit"` // 可接受手续费上限 单位:nanoFIL
-	PType    string `gorm:"column:ptype"`    // 类型
-	Nonce    uint64 `gorm:"column:nonce"`    // 交易计数
+type VPSOrder struct {
+	Amount int64  `json:"amount"`
+	To     string `json:"to"`
 }

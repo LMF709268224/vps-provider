@@ -64,9 +64,12 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 		log.Fatalf("authMiddleware.MiddlewareInit: %v", err)
 	}
 
+	apiV1.GET("/", homePage)
 	apiV1.POST("/register", userRegisterHandler)
 	apiV1.POST("/login", authMiddleware.LoginHandler)
 	apiV1.POST("/logout", authMiddleware.LogoutHandler)
+	apiV1.POST("/action", someAction)
+	apiV1.POST("/action2", someAction)
 	apiV1.Use(authMiddleware.MiddlewareFunc())
 	apiV1.GET("/refresh_token", authMiddleware.RefreshHandler)
 }
