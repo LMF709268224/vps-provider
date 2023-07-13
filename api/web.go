@@ -80,10 +80,10 @@ func DescribeRecommendInstanceType(c *gin.Context) {
 }
 
 func DescribeImages(c *gin.Context) {
-	RegionId := c.Query("regionId")
-	rsp := services.DescribeImagesWithOptions(RegionId)
-	// 这里处理按钮点击后的逻辑
-	//...
+	regionId := c.Query("regionId")
+	fmt.Println("RegionId:", regionId)
+	rsp := services.DescribeImagesWithOptions(regionId)
+
 	if rsp == nil {
 		c.JSON(http.StatusOK, respJSON(JsonObject{
 			"data": nil,
@@ -128,15 +128,23 @@ func Str2Float32(s string) float32 {
 	return float32(ret)
 }
 
+func DescribeRegions(c *gin.Context) {
+	list := services.DescribeRegions()
+
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"images": list,
+	}))
+}
+
 func homePage(c *gin.Context) {
-	options := services.DescribeRegions()
+	// options := services.DescribeRegions()
 
-	myVars := PageVariables{
-		RegionIds: options,
-	}
+	// myVars := PageVariables{
+	// 	RegionIds: options,
+	// }
 
-	tmpl := template.Must(template.ParseFiles("homepage.html"))
-	tmpl.Execute(c.Writer, myVars)
+	tmpl := template.Must(template.ParseFiles("homepage2.html"))
+	tmpl.Execute(c.Writer, nil)
 }
 
 type PageVariables struct {

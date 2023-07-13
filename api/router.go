@@ -54,27 +54,28 @@ func (s *Server) Close() {
 
 func configRouter(router *gin.Engine, cfg config.Config) {
 	apiV1 := router.Group("/api/v1")
-	authMiddleware, err := jwtGinMiddleware(cfg.SecretKey)
-	if err != nil {
-		log.Fatalf("jwt auth middleware: %v", err)
-	}
+	// authMiddleware, err := jwtGinMiddleware(cfg.SecretKey)
+	// if err != nil {
+	// 	log.Fatalf("jwt auth middleware: %v", err)
+	// }
 
-	err = authMiddleware.MiddlewareInit()
-	if err != nil {
-		log.Fatalf("authMiddleware.MiddlewareInit: %v", err)
-	}
+	// err = authMiddleware.MiddlewareInit()
+	// if err != nil {
+	// 	log.Fatalf("authMiddleware.MiddlewareInit: %v", err)
+	// }
 
 	apiV1.GET("/", homePage)
 	apiV1.POST("/register", userRegisterHandler)
-	apiV1.POST("/login", authMiddleware.LoginHandler)
-	apiV1.POST("/logout", authMiddleware.LogoutHandler)
+	// apiV1.POST("/login", authMiddleware.LoginHandler)
+	// apiV1.POST("/logout", authMiddleware.LogoutHandler)
 	apiV1.POST("/action", someAction)
-	apiV1.POST("/describe_price", DescribePrice)
-	apiV1.POST("/describe_instance_type", DescribeRecommendInstanceType)
-	apiV1.POST("/describe_images", DescribeImages)
+	apiV1.GET("/describe_price", DescribePrice)
+	apiV1.GET("/describe_instance_type", DescribeRecommendInstanceType)
+	apiV1.GET("/describe_images", DescribeImages)
+	apiV1.GET("/describe_regions", DescribeRegions)
 	apiV1.POST("/create_security_group", CreateSecurityGroup)
 	apiV1.POST("/create_instance", CreateInstance)
 	apiV1.POST("/action2", someAction)
-	apiV1.Use(authMiddleware.MiddlewareFunc())
-	apiV1.GET("/refresh_token", authMiddleware.RefreshHandler)
+	// apiV1.Use(authMiddleware.MiddlewareFunc())
+	// apiV1.GET("/refresh_token", authMiddleware.RefreshHandler)
 }

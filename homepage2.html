@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Using Vue in HTML</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <button v-on:click="showMessage">Click me</button>
+        <select>
+            <option v-for="item in list" :key="item">{{item}}</option>
+        </select>
+
+    </div>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello, Vue!',
+                list: [],
+            },
+            mounted () {
+                this.fetch();
+            },
+            methods: {
+                showMessage: function () {
+                    alert(this.message);
+                },
+                fetch () {
+                    axios.get("http://127.0.0.1:5566/api/v1/describe_regions", {
+                    }).then((res) => {
+                        console.log(res)
+                        this.list = res.data.data.images || []
+                    })
+                }
+
+            }
+        });
+    </script>
+</body>
+
+
+</html>

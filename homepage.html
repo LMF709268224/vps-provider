@@ -2,18 +2,66 @@
 <html>
 
 <head>
-    <title>Homepage</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #bdb7b7;
+        }
+
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            /* Green */
+            border: none;
+            color: rgb(255, 255, 255);
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
-    <select name="mySelect">
-        {{range .RegionIds}}
-        <option value="{{.}}">{{.}}</option>
-        {{end}}
-    </select>
-    <form method="POST" action="/api/v1/action">
-        <button type="submit">Click me!</button>
-    </form>
+    <div style="text-align: center;">
+        <select id="myRegions">
+            {{range .RegionIds}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+        <script>
+            document.getElementById('myRegions').addEventListener('change', function () {
+                console.log('你选择的是: ' + this.value);
+                fetch('/api/v1/describe_images?regionId=' + encodeURIComponent(this.value))
+                    .then(response => response.json())
+                    .then(data => console.log(data))
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            });
+        </script>
+        <!-- <select name="mySelect">
+            {{range .Images}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select> -->
+        <form method="POST" action="/api/v1/action">
+            <button class="button" type="submit">Click me</button>
+        </form>
+    </div>
 </body>
+
 
 </html>
