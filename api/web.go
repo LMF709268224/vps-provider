@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 
 	"vps-provider/services"
 
 	"github.com/gin-gonic/gin"
 )
+
+type JsonObject map[string]interface{}
 
 func someAction(c *gin.Context) {
 	// username := c.Query("username")
@@ -21,14 +24,108 @@ func someAction(c *gin.Context) {
 	http.Redirect(c.Writer, c.Request, "/someAction2", http.StatusOK)
 }
 
-func someAction2(c *gin.Context) {
-	// username := c.Query("username")
-	// passStr := c.Query("password")
-
+func DescribePrice(c *gin.Context) {
+	RegionId := c.Query("regionId")
+	InstanceType := c.Query("instanceType")
+	price := services.DescribePriceWithOptions(RegionId, InstanceType)
 	// 这里处理按钮点击后的逻辑
 	//...
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"price": price,
+	}))
+}
 
-	fmt.Println("someAction2-----------")
+func CreateInstance(c *gin.Context) {
+	RegionId := c.Query("regionId")
+	InstanceType := c.Query("instanceType")
+	ImageId := c.Query("imageId")
+	SecurityGroupId := c.Query("securityGroupId")
+	err := services.CreateInstanceWithOptions(RegionId, InstanceType, ImageId, SecurityGroupId)
+	// 这里处理按钮点击后的逻辑
+	//...
+	if err != nil {
+		c.JSON(http.StatusOK, respJSON(JsonObject{
+			"data": "create failed",
+		}))
+	}
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"price": "success",
+	}))
+}
+
+func DescribeRecommendInstanceType(c *gin.Context) {
+	Cores := Str2Int32(c.Query("cores"))
+	RegionId := c.Query("regionId")
+	Memory := Str2Float32(c.Query("memory"))
+	rsp := services.DescribeRecommendInstanceTypeWithOptions(RegionId, Cores, Memory)
+	// 这里处理按钮点击后的逻辑
+	//...
+	if rsp == nil {
+		c.JSON(http.StatusOK, respJSON(JsonObject{
+			"data": nil,
+		}))
+		return
+	}
+	var rpsData []string
+	for _, data := range rsp.Body.Data.RecommendInstanceType {
+		instanceType := data.InstanceType.InstanceType
+		if *instanceType == "" {
+			continue
+		}
+		rpsData = append(rpsData, *instanceType)
+	}
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"data": rpsData,
+	}))
+}
+
+func DescribeImages(c *gin.Context) {
+	RegionId := c.Query("regionId")
+	rsp := services.DescribeImagesWithOptions(RegionId)
+	// 这里处理按钮点击后的逻辑
+	//...
+	if rsp == nil {
+		c.JSON(http.StatusOK, respJSON(JsonObject{
+			"data": nil,
+		}))
+		return
+	}
+	var rpsData []string
+	for _, data := range rsp.Body.Images.Image {
+		instanceType := data.ImageId
+		if *instanceType == "" {
+			continue
+		}
+		rpsData = append(rpsData, *instanceType)
+	}
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"images": rpsData,
+	}))
+}
+
+func CreateSecurityGroup(c *gin.Context) {
+	RegionId := c.Query("regionId")
+	rsp := services.CreateSecurityGroup(RegionId)
+	// 这里处理按钮点击后的逻辑
+	//...
+	c.JSON(http.StatusOK, respJSON(JsonObject{
+		"security_group_id": rsp.Body.SecurityGroupId,
+	}))
+}
+
+func Str2Int32(s string) int32 {
+	n, _ := strconv.Atoi(s)
+	num := int32(n)
+	return num
+}
+
+func Str2Float32(s string) float32 {
+	ret, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		log.Error(err.Error())
+		return 0.00
+	}
+	return float32(ret)
 }
 
 func homePage(c *gin.Context) {

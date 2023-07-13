@@ -3,6 +3,7 @@ module vps-provider
 go 1.19
 
 require (
+	github.com/aliyun/alibaba-cloud-sdk-go v1.62.440
 	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/gin-contrib/cors v1.4.0
@@ -15,7 +16,6 @@ require (
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/aliyun/alibaba-cloud-sdk-go v1.62.440 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
