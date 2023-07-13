@@ -35,7 +35,7 @@ func homePage(c *gin.Context) {
 	options := services.DescribeRegions()
 
 	myVars := PageVariables{
-		Options: options,
+		RegionIds: options,
 	}
 
 	tmpl := template.Must(template.ParseFiles("homepage.html"))
@@ -43,5 +43,5 @@ func homePage(c *gin.Context) {
 }
 
 type PageVariables struct {
-	Options []string
+	RegionIds []string
 }

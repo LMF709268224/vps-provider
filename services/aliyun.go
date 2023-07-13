@@ -3,11 +3,13 @@ package services
 import (
 	"fmt"
 
+	"vps-provider/config"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 )
 
 func New() {
-	client2, err := ecs.NewClientWithAccessKey("cn-hangzhou", "LTAI5tLczyBS9h4APo9u9c1X", "xHF9hl7qesCYqv8Wp1TLjhDU6EPPjQ")
+	client2, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
 	if err != nil {
 		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
 		return
@@ -33,7 +35,7 @@ func New() {
 
 func DescribeRegions() []string {
 	// 获取区域
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", "LTAI5tLczyBS9h4APo9u9c1X", "xHF9hl7qesCYqv8Wp1TLjhDU6EPPjQ")
+	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
 	if err != nil {
 		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
 		return nil
@@ -61,7 +63,7 @@ func DescribeRegions() []string {
 
 func DescribeZones() {
 	// 获取区域下的可用区
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", "LTAI5tLczyBS9h4APo9u9c1X", "xHF9hl7qesCYqv8Wp1TLjhDU6EPPjQ")
+	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
 	if err != nil {
 		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
 		return
@@ -84,7 +86,7 @@ func DescribeZones() {
 
 func DescribeAvailableResource(regionId string) {
 	// 提供的所有实例规格的信息
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", "LTAI5tLczyBS9h4APo9u9c1X", "xHF9hl7qesCYqv8Wp1TLjhDU6EPPjQ")
+	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
 	if err != nil {
 		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
 		return
@@ -116,7 +118,7 @@ func DescribeAvailableResource(regionId string) {
 
 func DescribeInstanceTypes(regionId string) {
 	// 提供的所有实例规格的信息
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", "LTAI5tLczyBS9h4APo9u9c1X", "xHF9hl7qesCYqv8Wp1TLjhDU6EPPjQ")
+	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
 	if err != nil {
 		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
 		return
