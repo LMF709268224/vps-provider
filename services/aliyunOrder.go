@@ -37,7 +37,7 @@ func CreateInstanceWithOptions(RegionId, InstanceType, ImageId, SecurityGroupId 
 	// 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例使用环境变量获取 AccessKey 的方式进行调用，仅供参考，建议使用更安全的 STS 方式，更多鉴权访问方式请参见：https://help.aliyun.com/document_detail/378661.html
 	client, err := CreateClient(tea.String(AccessKeyId), tea.String(AccessKeySecret))
 	if err != nil {
-		fmt.Errorf("%v", err)
+		fmt.Errorf("CreateClient %v", err)
 		return err
 	}
 
@@ -58,7 +58,7 @@ func CreateInstanceWithOptions(RegionId, InstanceType, ImageId, SecurityGroupId 
 		// 复制代码运行请自行打印 API 的返回值
 		result, err := client.CreateInstanceWithOptions(createInstanceRequest, runtime)
 		if err != nil {
-			fmt.Errorf("%v", err)
+			fmt.Errorf("CreateInstanceWithOptions %v", err)
 			return err
 		}
 		fmt.Println(result)
