@@ -2,66 +2,189 @@
 <html>
 
 <head>
+    <title>Using Vue in HTML</title>
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #bdb7b7;
+        .selectColor {
+            height: 30px !important;
+            border: 1px solid #67c23a !important;
+            border-radius: 10px !important;
+            width: 150px !important;
         }
 
-        .container {
-            width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        .imagesListColor {
+            width: 300px !important;
+            margin: 0 30px;
         }
 
-        .button {
-            background-color: #4CAF50;
-            /* Green */
-            border: none;
-            color: rgb(255, 255, 255);
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 5px;
+        .priceColor {
+            margin-top: 10px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
         }
     </style>
 </head>
 
 <body>
-    <div style="text-align: center;">
-        <select id="myRegions">
-            {{range .RegionIds}}
-            <option value="{{.}}">{{.}}</option>
-            {{end}}
-        </select>
-        <script>
-            document.getElementById('myRegions').addEventListener('change', function () {
-                console.log('你选择的是: ' + this.value);
-                fetch('/api/v1/describe_images?regionId=' + encodeURIComponent(this.value))
-                    .then(response => response.json())
-                    .then(data => console.log(data))
-                    .catch((error) => {
-                        console.error('Error:', error);
-                    });
-            });
-        </script>
-        <!-- <select name="mySelect">
-            {{range .Images}}
-            <option value="{{.}}">{{.}}</option>
-            {{end}}
-        </select> -->
-        <form method="POST" action="/api/v1/action">
-            <button class="button" type="submit">Click me</button>
-        </form>
-    </div>
-</body>
+    <div id="app">
+        <div>
+            <el-select v-model="value" placeholder="请选择">
+                <el-option v-for="(item,index) in list" :key="index" :label="item" :value="item">
+                </el-option>
+            </el-select>
+            <el-select v-model="imgvalue" placeholder="请选择">
+                <el-option v-for="(item,index) in imagesList" :key="index" :label="item" :value="item">
+                </el-option>
+            </el-select>
+            <el-select v-model="instancevalue" placeholder="请选择">
+                <el-option v-for="(item,index) in instanceList" :key="index" :label="item" :value="item">
+                </el-option>
+            </el-select>
+        </div>
 
+        <div class="priceColor">
+            <div>预计价格:</div>
+            <div id="newPrice"></div>
+        </div>
+        <el-button type="success" @click="getclick">购买</el-button>
+
+        <div class="priceColor">
+            <div></div>
+            <div id="buyResult"></div>
+        </div>
+
+        <div class="priceColor">
+            <div>InstanceId的值:</div>
+            <div id="InstanceId"></div>
+        </div>
+        <div class="priceColor">
+            <div>OrderId的值:</div>
+            <div id="OrderId"></div>
+        </div>
+        <div class="priceColor">
+            <div>RequestId的值：</div>
+            <div id="RequestId"></div>
+        </div>
+
+        <div class="priceColor">
+            <div>TradePrice的值：</div>
+            <div id="TradePrice"></div>
+        </div>
+
+
+    </div>
+
+    <script>
+
+        new Vue({
+            el: '#app',
+            data: {
+                value: '',
+                imgvalue: '',
+                instancevalue: '',
+                list: [],
+                imagesList: [],
+                instanceList: [],
+                price: '',
+                securityGroupId: '',
+            },
+            mounted () {
+                this.getOptions();
+            },
+            watch: {
+                value () {
+                    this.imgvalue = '';
+                    this.instancevalue = '';
+                    this.getdescribe_images();
+                    this.getdescribetype();
+                    this.getsecurit();
+                },
+                instancevalue () {
+                    this.getprice();
+                }
+            },
+            methods: {
+                vlaueClick () {
+                    // console.log(this.value)
+                },
+                getOptions () {
+                    axios.get("http://192.168.0.78:5566/api/v1/describe_regions").then((res) => {
+                        console.log(res)
+                        this.list = res.data.data.images || [];
+                        this.value = this.list[0];
+                        this.getdescribe_images();
+                        this.getdescribetype();
+                        this.getsecurit();
+
+                    })
+                },
+                getdescribe_images () {
+                    axios.get("http://192.168.0.78:5566/api/v1/describe_images?regionId=" + this.value).then((res) => {
+                        this.imagesList = res.data.data.images || [];
+                        this.imgvalue = this.imagesList[0];
+                    })
+                },
+
+                getdescribetype () {
+                    axios.get("http://192.168.0.78:5566/api/v1/describe_instance_type?cores=" + 1 + "&memory=" + 1 + "&regionId=" + this.value).then((res) => {
+                        this.instanceList = res.data.data.data || [];
+                        this.getprice();
+                        // this.instancevalue = this.instanceList[0];
+                    })
+                },
+
+                getprice () {
+                    axios.get("http://192.168.0.78:5566/api/v1/describe_price?regionId=" + this.value + "&instanceType=" + this.instancevalue).then((res) => {
+                        const selectprice = document.getElementById('newPrice');
+                        selectprice.innerHTML = res.data.data.price;
+                    })
+                },
+                getsecurit () {
+                    axios.get("http://192.168.0.78:5566/api/v1/create_security_group?regionId=" + this.value).then((res) => {
+                        this.securityGroupId = res.data.data.security_group_id;
+                        // console.log(this.securityGroupId)
+                    })
+                },
+
+
+                getclick () {
+                    if (!this.value) {
+                        this.$message('请选择第一个输入框的值');
+                        return false;
+                    }
+                    if (!this.imgvalue) {
+                        this.$message('请选择第二个输入框的值');
+                        return false;
+                    }
+                    if (!this.instancevalue) {
+                        this.$message('请选择第三个输入框的值');
+                        return false;
+                    }
+                    axios.get("http://192.168.0.78:5566/api/v1/create_instance?regionId=" + this.value + "&instanceType=" + this.instancevalue + "&imageId=" + this.imgvalue + "&securityGroupId=" + this.securityGroupId).then((res) => {
+                        // const r = document.getElementById('buyResult');
+                        // r.innerHTML = res.data.data.data;
+                        // console.log(res.data.data.data)
+                        const InstanceId = document.getElementById('InstanceId');
+                        InstanceId.innerHTML = res.data.data.data.body.InstanceId;
+                        const OrderId = document.getElementById('OrderId');
+                        OrderId.innerHTML = res.data.data.data.body.OrderId;
+                        const RequestId = document.getElementById('RequestId');
+                        RequestId.innerHTML = res.data.data.data.body.RequestId;
+                        const TradePrice = document.getElementById('TradePrice');
+                        TradePrice.innerHTML = res.data.data.data.body.TradePrice;
+                    })
+
+                }
+
+
+            }
+        });
+    </script>
+</body>
 
 </html>
