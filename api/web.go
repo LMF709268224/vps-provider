@@ -21,14 +21,14 @@ func describePrice(c *gin.Context) {
 	price, err := services.DescribePriceWithOptions(regionID, instanceType, priceUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"price": price,
 	}))
 }
@@ -43,7 +43,7 @@ func createInstance(c *gin.Context) {
 	result, err := services.CreateInstance(regionID, instanceType, imageID, securityGroupID, periodUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],
@@ -63,7 +63,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 	rsp, err := services.DescribeRecommendInstanceTypeWithOptions(regionID, cores, memory)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],
@@ -95,7 +95,7 @@ func describeImages(c *gin.Context) {
 	rsp, err := services.DescribeImagesWithOptions(regionID)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],
@@ -126,14 +126,14 @@ func createSecurityGroup(c *gin.Context) {
 	rsp, err := services.CreateSecurityGroup(regionID)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"security_group_id": rsp.Body.SecurityGroupId,
 	}))
 }
@@ -142,8 +142,16 @@ func describeAvailableResource(c *gin.Context) {
 	regionID := c.Query("regionId")
 	cores := str2Int32(c.Query("cores"))
 	memory := str2Float32(c.Query("memory"))
-	rsp := services.DescribeAvailableResourceWithOptions(regionID, cores, memory)
-
+	rsp, err := services.DescribeAvailableResourceWithOptions(regionID, cores, memory)
+	if err != nil {
+		data := utils.StrToMap(*err.Data)
+		c.JSON(http.StatusOK, respJSON(jsonObject{
+			"code":    err.StatusCode,
+			"msg":     err.Code,
+			"details": data["Message"],
+		}))
+		return
+	}
 	rpsData := make(map[string]string)
 	for _, data := range rsp.Body.AvailableZones.AvailableZone {
 		for _, resource := range data.AvailableResources.AvailableResource {
@@ -177,7 +185,7 @@ func describeRegions(c *gin.Context) {
 	rsp, err := services.DescribeRegionsWithOptions()
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"code":    err.StatusCode,
 			"msg":     err.Code,
 			"details": data["Message"],

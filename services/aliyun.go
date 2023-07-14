@@ -103,7 +103,7 @@ func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period i
 		return nil
 	}()
 	if tryErr != nil {
-		var errors = &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
 			errors = _t
 		} else {
@@ -132,7 +132,7 @@ func DescribeRegionsWithOptions() (*ecs20140526.DescribeRegionsResponse, *tea.SD
 		return nil
 	}()
 	if tryErr != nil {
-		var errors = &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
 			errors = _t
 		} else {
@@ -169,7 +169,7 @@ func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memo
 	}()
 
 	if tryErr != nil {
-		var errors = &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
 			errors = _t
 		} else {
@@ -208,7 +208,7 @@ func CreateSecurityGroup(RegionId string) (*ecs20140526.CreateSecurityGroupRespo
 	}()
 
 	if tryErr != nil {
-		var errors = &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
 			errors = _t
 		} else {
@@ -242,7 +242,7 @@ func DescribeImagesWithOptions(RegionId string) (*ecs20140526.DescribeImagesResp
 	}()
 
 	if tryErr != nil {
-		var errors = &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
 			errors = _t
 		} else {
@@ -253,14 +253,9 @@ func DescribeImagesWithOptions(RegionId string) (*ecs20140526.DescribeImagesResp
 	return result, nil
 }
 
-func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory float32) *ecs20140526.DescribeAvailableResourceResponse {
+func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory float32) (*ecs20140526.DescribeAvailableResourceResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeAvailableResourceResponse
-	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
-	if err != nil {
-		fmt.Errorf("%v", err)
-		return result
-	}
-
+	var err error
 	describeAvailableResourceRequest := &ecs20140526.DescribeAvailableResourceRequest{
 		RegionId:            tea.String(RegionId),
 		DestinationResource: tea.String("InstanceType"),
@@ -275,7 +270,7 @@ func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory f
 				_e = r
 			}
 		}()
-		result, err = client.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
+		result, err = AliClient.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
 		if err != nil {
 			fmt.Errorf("%v", err)
 			return err
@@ -284,13 +279,13 @@ func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory f
 	}()
 
 	if tryErr != nil {
-		error := &tea.SDKError{}
+		errors := &tea.SDKError{}
 		if _t, ok := tryErr.(*tea.SDKError); ok {
-			error = _t
+			errors = _t
 		} else {
-			error.Message = tea.String(tryErr.Error())
+			errors.Message = tea.String(tryErr.Error())
 		}
-		return result
+		return result, errors
 	}
-	return result
+	return result, nil
 }
