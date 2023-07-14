@@ -2,6 +2,7 @@ package api
 
 import (
 	"time"
+	"vps-provider/services"
 
 	"vps-provider/config"
 
@@ -53,6 +54,10 @@ func (s *Server) Close() {
 }
 
 func configRouter(router *gin.Engine, cfg config.Config) {
+	err := services.ClientInit()
+	if err != nil {
+		log.Fatal(err)
+	}
 	apiV1 := router.Group("/api/v1")
 	// authMiddleware, err := jwtGinMiddleware(cfg.SecretKey)
 	// if err != nil {

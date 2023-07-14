@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	logging "github.com/ipfs/go-log/v2"
 	"math"
@@ -76,4 +77,13 @@ func RandFloat64() float64 {
 		randFloat = -float64(randInt)
 	}
 	return randFloat
+}
+func StrToMap(str string) map[string]interface{} {
+	out := make(map[string]interface{})
+	err := json.Unmarshal([]byte(str), &out)
+	if err != nil {
+		log.Errorf("StrToMap:%v", err)
+		return nil
+	}
+	return out
 }
