@@ -162,10 +162,11 @@ func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memo
 	}
 
 	describeRecommendInstanceTypeRequest := &ecs20140526.DescribeRecommendInstanceTypeRequest{
-		NetworkType: tea.String("vpc"),
-		RegionId:    tea.String(RegionId),
-		Cores:       tea.Int32(Cores),
-		Memory:      tea.Float32(Memory),
+		// NetworkType:        tea.String("vpc"),
+		RegionId:           tea.String(RegionId),
+		Cores:              tea.Int32(Cores),
+		Memory:             tea.Float32(Memory),
+		InstanceChargeType: tea.String("PrePaid"),
 	}
 	runtime := &util.RuntimeOptions{}
 	tryErr := func() (_e error) {
@@ -251,6 +252,48 @@ func DescribeImagesWithOptions(RegionId string) *ecs20140526.DescribeImagesRespo
 			}
 		}()
 		result, err = client.DescribeImagesWithOptions(createSecurityGroupRequest, runtime)
+		if err != nil {
+			fmt.Errorf("%v", err)
+			return err
+		}
+		return nil
+	}()
+
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+		return result
+	}
+	return result
+}
+
+func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory float32) *ecs20140526.DescribeAvailableResourceResponse {
+	var result *ecs20140526.DescribeAvailableResourceResponse
+	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
+	if err != nil {
+		fmt.Errorf("%v", err)
+		return result
+	}
+
+	describeAvailableResourceRequest := &ecs20140526.DescribeAvailableResourceRequest{
+		RegionId:            tea.String(RegionId),
+		DestinationResource: tea.String("InstanceType"),
+		InstanceChargeType:  tea.String("PrePaid"),
+		Cores:               tea.Int32(cores),
+		Memory:              tea.Float32(memory),
+	}
+	runtime := &util.RuntimeOptions{}
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, err = client.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
 		if err != nil {
 			fmt.Errorf("%v", err)
 			return err

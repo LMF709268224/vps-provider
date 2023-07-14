@@ -11,8 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type JsonObject map[string]interface{}
-
 func describePrice(c *gin.Context) {
 	regionID := c.Query("regionId")
 	instanceType := c.Query("instanceType")
@@ -20,7 +18,7 @@ func describePrice(c *gin.Context) {
 	period := str2Int32(c.Query("period"))
 	price := services.DescribePriceWithOptions(regionID, instanceType, priceUnit, period)
 
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"price": price,
 	}))
 }
@@ -38,7 +36,7 @@ func createInstance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"data": result,
 	}))
 }
@@ -50,7 +48,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 	rsp := services.DescribeRecommendInstanceTypeWithOptions(regionID, cores, memory)
 
 	if rsp == nil {
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"data": nil,
 		}))
 		return
@@ -63,7 +61,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 		}
 		rpsData = append(rpsData, *instanceType)
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"data": rpsData,
 	}))
 }
@@ -74,7 +72,7 @@ func describeImages(c *gin.Context) {
 	rsp := services.DescribeImagesWithOptions(regionID)
 
 	if rsp == nil {
-		c.JSON(http.StatusOK, respJSON(JsonObject{
+		c.JSON(http.StatusOK, respJSON(jsonObject{
 			"images": nil,
 		}))
 		return
@@ -87,7 +85,7 @@ func describeImages(c *gin.Context) {
 		}
 		rpsData = append(rpsData, *instanceType)
 	}
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"images": rpsData,
 	}))
 }
@@ -96,8 +94,28 @@ func createSecurityGroup(c *gin.Context) {
 	regionID := c.Query("regionId")
 	rsp := services.CreateSecurityGroup(regionID)
 
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"security_group_id": rsp.Body.SecurityGroupId,
+	}))
+}
+
+func describeAvailableResource(c *gin.Context) {
+	regionID := c.Query("regionId")
+	cores := str2Int32(c.Query("cores"))
+	memory := str2Float32(c.Query("memory"))
+	rsp := services.DescribeAvailableResourceWithOptions(regionID, cores, memory)
+
+	rpsData := make(map[string]string)
+	for _, data := range rsp.Body.AvailableZones.AvailableZone {
+		for _, resource := range data.AvailableResources.AvailableResource {
+			for _, sr := range resource.SupportedResources.SupportedResource {
+				rpsData[*sr.Value] = *sr.Status
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"data": rpsData,
 	}))
 }
 
@@ -126,7 +144,7 @@ func describeRegions(c *gin.Context) {
 		list = append(list, *region.RegionId)
 	}
 
-	c.JSON(http.StatusOK, respJSON(JsonObject{
+	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"images": list,
 	}))
 }
