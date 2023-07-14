@@ -13,48 +13,29 @@ import (
 
 type JsonObject map[string]interface{}
 
-func someAction(c *gin.Context) {
-	// username := c.Query("username")
-	// passStr := c.Query("password")
-
-	// 这里处理按钮点击后的逻辑
-	//...
-
-	fmt.Println("someAction-----------")
-	http.Redirect(c.Writer, c.Request, "/someAction2", http.StatusOK)
-}
-
-func DescribePrice(c *gin.Context) {
-	regionId := c.Query("regionId")
+func describePrice(c *gin.Context) {
+	regionID := c.Query("regionId")
 	instanceType := c.Query("instanceType")
 	priceUnit := c.Query("priceUnit")
-	period := Str2Int32(c.Query("period"))
-	priceUnit = "Week"
-	period = 1
-	price := services.DescribePriceWithOptions(regionId, instanceType, priceUnit, period)
-	// 这里处理按钮点击后的逻辑
-	//...
+	period := str2Int32(c.Query("period"))
+	price := services.DescribePriceWithOptions(regionID, instanceType, priceUnit, period)
+
 	c.JSON(http.StatusOK, respJSON(JsonObject{
 		"price": price,
 	}))
 }
 
-func CreateInstance(c *gin.Context) {
-	regionId := c.Query("regionId")
+func createInstance(c *gin.Context) {
+	regionID := c.Query("regionId")
 	instanceType := c.Query("instanceType")
-	imageId := c.Query("imageId")
-	securityGroupId := c.Query("securityGroupId")
+	imageID := c.Query("imageId")
+	securityGroupID := c.Query("securityGroupId")
 	periodUnit := c.Query("priceUnit")
-	period := Str2Int32(c.Query("period"))
-	periodUnit = "Week"
-	period = 1
-	result, err := services.CreateInstanceWithOptions(regionId, instanceType, imageId, securityGroupId, periodUnit, period)
-	// 这里处理按钮点击后的逻辑
-	//...
-	// fmt.Println("-------------------------------")
-	// fmt.Println(result)
+	period := str2Int32(c.Query("period"))
+	result, err := services.CreateInstanceWithOptions(regionID, instanceType, imageID, securityGroupID, periodUnit, period)
 	if err != nil {
 		c.JSON(http.StatusOK, respError(err))
+		return
 	}
 
 	c.JSON(http.StatusOK, respJSON(JsonObject{
@@ -62,13 +43,12 @@ func CreateInstance(c *gin.Context) {
 	}))
 }
 
-func DescribeRecommendInstanceType(c *gin.Context) {
-	cores := Str2Int32(c.Query("cores"))
-	regionId := c.Query("regionId")
-	memory := Str2Float32(c.Query("memory"))
-	rsp := services.DescribeRecommendInstanceTypeWithOptions(regionId, cores, memory)
-	// 这里处理按钮点击后的逻辑
-	//...
+func describeRecommendInstanceType(c *gin.Context) {
+	cores := str2Int32(c.Query("cores"))
+	regionID := c.Query("regionId")
+	memory := str2Float32(c.Query("memory"))
+	rsp := services.DescribeRecommendInstanceTypeWithOptions(regionID, cores, memory)
+
 	if rsp == nil {
 		c.JSON(http.StatusOK, respJSON(JsonObject{
 			"data": nil,
@@ -88,10 +68,10 @@ func DescribeRecommendInstanceType(c *gin.Context) {
 	}))
 }
 
-func DescribeImages(c *gin.Context) {
-	regionId := c.Query("regionId")
-	fmt.Println("RegionId:", regionId)
-	rsp := services.DescribeImagesWithOptions(regionId)
+func describeImages(c *gin.Context) {
+	regionID := c.Query("regionId")
+	fmt.Println("RegionId:", regionID)
+	rsp := services.DescribeImagesWithOptions(regionID)
 
 	if rsp == nil {
 		c.JSON(http.StatusOK, respJSON(JsonObject{
@@ -112,23 +92,22 @@ func DescribeImages(c *gin.Context) {
 	}))
 }
 
-func CreateSecurityGroup(c *gin.Context) {
-	regionId := c.Query("regionId")
-	rsp := services.CreateSecurityGroup(regionId)
-	// 这里处理按钮点击后的逻辑
-	//...
+func createSecurityGroup(c *gin.Context) {
+	regionID := c.Query("regionId")
+	rsp := services.CreateSecurityGroup(regionID)
+
 	c.JSON(http.StatusOK, respJSON(JsonObject{
 		"security_group_id": rsp.Body.SecurityGroupId,
 	}))
 }
 
-func Str2Int32(s string) int32 {
+func str2Int32(s string) int32 {
 	n, _ := strconv.Atoi(s)
 	num := int32(n)
 	return num
 }
 
-func Str2Float32(s string) float32 {
+func str2Float32(s string) float32 {
 	ret, err := strconv.ParseFloat(s, 32)
 	if err != nil {
 		log.Error(err.Error())
@@ -137,7 +116,7 @@ func Str2Float32(s string) float32 {
 	return float32(ret)
 }
 
-func DescribeRegions(c *gin.Context) {
+func describeRegions(c *gin.Context) {
 	rsp := services.DescribeRegionsWithOptions()
 
 	list := make([]string, 0)
@@ -153,16 +132,6 @@ func DescribeRegions(c *gin.Context) {
 }
 
 func homePage(c *gin.Context) {
-	// options := services.DescribeRegions()
-
-	// myVars := PageVariables{
-	// 	RegionIds: options,
-	// }
-
 	tmpl := template.Must(template.ParseFiles("homepage.html"))
 	tmpl.Execute(c.Writer, nil)
-}
-
-type PageVariables struct {
-	RegionIds []string
 }

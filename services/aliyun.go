@@ -5,141 +5,267 @@ import (
 
 	"vps-provider/config"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
+	ecs20140526 "github.com/alibabacloud-go/ecs-20140526/v2/client"
+	util "github.com/alibabacloud-go/tea-utils/service"
+	"github.com/alibabacloud-go/tea/tea"
 )
 
-func New() {
-	client2, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
-	if err != nil {
-		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
-		return
+/**
+ * 使用AK&SK初始化账号Client
+ * @param config.Cfg.AliyunAccessKeyID
+ * @param config.Cfg.AliyunAccessKeySecret
+ * @return Client
+ * @throws Exception
+ */
+func CreateClient(accessKeyId *string, accessKeySecret *string) (_result *ecs20140526.Client, _err error) {
+	config := &openapi.Config{
+		AccessKeyId:     accessKeyId,
+		AccessKeySecret: accessKeySecret,
 	}
 
-	request := ecs.CreateDescribePriceRequest()
-	request.RegionId = "cn-hangzhou"
-	request.InstanceType = "ecs.g5.large"
-	// request.ImageId = "alinux_17_01_64_20G_cloudinit_20170818.raw"
-
-	// req := &ecs.DescribePriceRequest{
-	// 	RpcRequest: &requests.RpcRequest{},
-	// }
-
-	rsp, err := client2.DescribePrice(request)
-	if err != nil {
-		fmt.Printf("DescribePrice err:%s", err.Error())
-		return
-	}
-
-	fmt.Println(rsp)
+	config.Endpoint = tea.String("ecs-cn-hangzhou.aliyuncs.com")
+	_result = &ecs20140526.Client{}
+	_result, _err = ecs20140526.NewClient(config)
+	return _result, _err
 }
 
-func DescribeRegions() []string {
-	// 获取区域
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
+func CreateInstanceWithOptions(RegionId, InstanceType, ImageId, SecurityGroupId, PeriodUnit string, Period int32) (*ecs20140526.CreateInstanceResponse, error) {
+	var result *ecs20140526.CreateInstanceResponse
+
+	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
 	if err != nil {
-		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
+		return result, err
+	}
+
+	createInstanceRequest := &ecs20140526.CreateInstanceRequest{
+		RegionId:           tea.String(RegionId),
+		InstanceType:       tea.String(InstanceType),
+		DryRun:             tea.Bool(true),
+		ImageId:            tea.String(ImageId),
+		SecurityGroupId:    tea.String(SecurityGroupId),
+		InstanceChargeType: tea.String("PrePaid"),
+		PeriodUnit:         tea.String(PeriodUnit),
+		Period:             tea.Int32(Period),
+	}
+	runtime := &util.RuntimeOptions{}
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+
+		result, err = client.CreateInstanceWithOptions(createInstanceRequest, runtime)
+		if err != nil {
+			fmt.Errorf("CreateInstanceWithOptions %v", err)
+			return err
+		}
+		// fmt.Println(result)
+		return nil
+	}()
+
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+
+		_err := util.AssertAsString(error.Message)
+		if _err != nil {
+			fmt.Print(*_err)
+		}
+	}
+	return result, nil
+}
+
+func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period int32) *ecs20140526.DescribePriceResponseBodyPriceInfoPrice {
+	var price *ecs20140526.DescribePriceResponseBodyPriceInfoPrice
+	client, _err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
+	if _err != nil {
+		return price
+	}
+
+	describePriceRequest := &ecs20140526.DescribePriceRequest{
+		RegionId:     tea.String(RegionId),
+		InstanceType: tea.String(InstanceType),
+		PriceUnit:    tea.String(PriceUnit),
+		Period:       tea.Int32(Period),
+	}
+	runtime := &util.RuntimeOptions{}
+
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, _err := client.DescribePriceWithOptions(describePriceRequest, runtime)
+		if _err != nil {
+			return _err
+		}
+		price = result.Body.PriceInfo.Price
+		return nil
+	}()
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+	}
+	return price
+}
+
+func DescribeRegionsWithOptions() *ecs20140526.DescribeRegionsResponse {
+	var result *ecs20140526.DescribeRegionsResponse
+	client, _err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
+	if _err != nil {
 		return nil
 	}
 
-	request := ecs.CreateDescribeRegionsRequest()
-	request.Scheme = "https" // optional, set "https" for https access
+	describeRegionsRequest := &ecs20140526.DescribeRegionsRequest{}
+	runtime := &util.RuntimeOptions{}
 
-	response, err := client.DescribeRegions(request)
-	if err != nil {
-		fmt.Printf("DescribeRegions err:%s", err.Error())
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, _err = client.DescribeRegionsWithOptions(describeRegionsRequest, runtime)
+		if _err != nil {
+			return _err
+		}
 		return nil
-	}
-
-	list := make([]string, 0)
-	// fmt.Printf("Response: %+v\n", response)
-	for _, region := range response.Regions.Region {
-		// fmt.Printf("Region ID: %s\n", region.RegionId)
-		list = append(list, region.RegionId)
-	}
-
-	fmt.Printf("Size: %d\n", len(response.Regions.Region))
-	return list
-}
-
-func DescribeZones() {
-	// 获取区域下的可用区
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
-	if err != nil {
-		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
-		return
-	}
-
-	request := ecs.CreateDescribeZonesRequest()
-	request.RegionId = "ap-southeast-3"
-
-	// 发送请求并获取响应
-	response, err := client.DescribeZones(request)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		// 打印可用区信息
-		for _, zone := range response.Zones.Zone {
-			fmt.Println("ZoneId:", zone.ZoneId)
+	}()
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
 		}
 	}
+	return result
 }
 
-func DescribeAvailableResource(regionId string) {
-	// 提供的所有实例规格的信息
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
+func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memory float32) *ecs20140526.DescribeRecommendInstanceTypeResponse {
+	var result *ecs20140526.DescribeRecommendInstanceTypeResponse
+	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
 	if err != nil {
-		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
-		return
+		fmt.Errorf("%v", err)
+		return result
 	}
 
-	fmt.Printf("regionId :%s \n", regionId)
-
-	request := ecs.CreateDescribeAvailableResourceRequest()
-	request.RegionId = regionId
-	request.DestinationResource = "InstanceType"
-
-	response, err := client.DescribeAvailableResource(request)
-	if err != nil {
-		panic(err)
+	describeRecommendInstanceTypeRequest := &ecs20140526.DescribeRecommendInstanceTypeRequest{
+		NetworkType: tea.String("vpc"),
+		RegionId:    tea.String(RegionId),
+		Cores:       tea.Int32(Cores),
+		Memory:      tea.Float32(Memory),
 	}
-
-	for _, zone := range response.AvailableZones.AvailableZone {
-		for _, resource := range zone.AvailableResources.AvailableResource {
-			// for _, sr := range resource.SupportedResources.SupportedResource {
-			// 	fmt.Printf("Value: %s, Status: %v\n", sr.Value, sr)
-			// }
-			fmt.Printf("Type: %s , SupportedResource size:%d \n", resource.Type, len(resource.SupportedResources.SupportedResource))
+	runtime := &util.RuntimeOptions{}
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, err = client.DescribeRecommendInstanceTypeWithOptions(describeRecommendInstanceTypeRequest, runtime)
+		if err != nil {
+			fmt.Errorf("%v", err)
+			return err
 		}
-		fmt.Printf("ZoneId: %s, Status: %s \n", zone.ZoneId, zone.Status)
-	}
+		return nil
+	}()
 
-	fmt.Println("size:", len(response.AvailableZones.AvailableZone))
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+		return result
+	}
+	return result
 }
 
-func DescribeInstanceTypes(regionId string) {
-	// 提供的所有实例规格的信息
-	client, err := ecs.NewClientWithAccessKey("cn-hangzhou", config.Cfg.AliyunAccessKeyID, config.Cfg.AliyunAccessKeySecret)
+func CreateSecurityGroup(RegionId string) *ecs20140526.CreateSecurityGroupResponse {
+	var result *ecs20140526.CreateSecurityGroupResponse
+	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
 	if err != nil {
-		fmt.Printf("NewClientWithAccessKey err:%s", err.Error())
-		return
+		fmt.Errorf("%v", err)
+		return result
 	}
 
-	fmt.Printf("regionId :%s \n", regionId)
+	createSecurityGroupRequest := &ecs20140526.CreateSecurityGroupRequest{
+		RegionId: tea.String(RegionId),
+	}
+	runtime := &util.RuntimeOptions{}
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, err = client.CreateSecurityGroupWithOptions(createSecurityGroupRequest, runtime)
+		if err != nil {
+			fmt.Errorf("%v", err)
+			return err
+		}
+		return nil
+	}()
 
-	request := ecs.CreateDescribeInstanceTypesRequest()
-	request.Scheme = "https" // optional, set "https" for https access
-	request.RegionId = regionId
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+		return result
+	}
+	return result
+}
 
-	response, err := client.DescribeInstanceTypes(request)
+func DescribeImagesWithOptions(RegionId string) *ecs20140526.DescribeImagesResponse {
+	var result *ecs20140526.DescribeImagesResponse
+	client, err := CreateClient(tea.String(config.Cfg.AliyunAccessKeyID), tea.String(config.Cfg.AliyunAccessKeySecret))
 	if err != nil {
-		panic(err)
+		fmt.Errorf("%v", err)
+		return result
 	}
 
-	for _, instanceType := range response.InstanceTypes.InstanceType {
-
-		fmt.Printf("InstanceType: %s, CPU Core Count: %d, Memory Size: %.fGB\n", instanceType.InstanceTypeId, instanceType.CpuCoreCount, instanceType.MemorySize)
-		break
+	createSecurityGroupRequest := &ecs20140526.DescribeImagesRequest{
+		RegionId: tea.String(RegionId),
 	}
+	runtime := &util.RuntimeOptions{}
+	tryErr := func() (_e error) {
+		defer func() {
+			if r := tea.Recover(recover()); r != nil {
+				_e = r
+			}
+		}()
+		result, err = client.DescribeImagesWithOptions(createSecurityGroupRequest, runtime)
+		if err != nil {
+			fmt.Errorf("%v", err)
+			return err
+		}
+		return nil
+	}()
 
-	fmt.Println("size:", len(response.InstanceTypes.InstanceType))
+	if tryErr != nil {
+		error := &tea.SDKError{}
+		if _t, ok := tryErr.(*tea.SDKError); ok {
+			error = _t
+		} else {
+			error.Message = tea.String(tryErr.Error())
+		}
+		return result
+	}
+	return result
 }
