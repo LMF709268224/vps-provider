@@ -1,11 +1,13 @@
 package services
 
 import (
+	"vps-provider/config"
+	"vps-provider/types"
+
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	ecs20140526 "github.com/alibabacloud-go/ecs-20140526/v2/client"
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/alibabacloud-go/tea/tea"
-	"vps-provider/config"
 )
 
 // ClientInit /**
@@ -27,20 +29,20 @@ type Client struct {
 
 var AliClient *ecs20140526.Client
 
-func CreateInstance(RegionId, InstanceType, ImageId, SecurityGroupId, PeriodUnit string, Period int32) (*ecs20140526.CreateInstanceResponse, *tea.SDKError) {
-	var result *ecs20140526.CreateInstanceResponse
+func CreateInstance(regionId, instanceType, imageId, securityGroupId, periodUnit string, period int32) (*types.CreateInstanceResponse, *tea.SDKError) {
+	var out *types.CreateInstanceResponse
 
 	createInstanceRequest := &ecs20140526.CreateInstanceRequest{
-		RegionId:           tea.String(RegionId),
-		InstanceType:       tea.String(InstanceType),
-		DryRun:             tea.Bool(true),
-		ImageId:            tea.String(ImageId),
-		SecurityGroupId:    tea.String(SecurityGroupId),
+		RegionId:           tea.String(regionId),
+		InstanceType:       tea.String(instanceType),
+		DryRun:             tea.Bool(false),
+		ImageId:            tea.String(imageId),
+		SecurityGroupId:    tea.String(securityGroupId),
 		InstanceChargeType: tea.String("PrePaid"),
-		PeriodUnit:         tea.String(PeriodUnit),
-		Period:             tea.Int32(Period),
+		PeriodUnit:         tea.String(periodUnit),
+		Period:             tea.Int32(period),
 	}
-	var err error
+
 	runtime := &util.RuntimeOptions{}
 	tryErr := func() (_e error) {
 		defer func() {
@@ -49,10 +51,18 @@ func CreateInstance(RegionId, InstanceType, ImageId, SecurityGroupId, PeriodUnit
 			}
 		}()
 
-		result, err = AliClient.CreateInstanceWithOptions(createInstanceRequest, runtime)
+		result, err := AliClient.CreateInstanceWithOptions(createInstanceRequest, runtime)
 		if err != nil {
 			return err
 		}
+
+		out = &types.CreateInstanceResponse{
+			InstanceId: *result.Body.InstanceId,
+			OrderId:    *result.Body.OrderId,
+			RequestId:  *result.Body.RequestId,
+			TradePrice: *result.Body.TradePrice,
+		}
+
 		return nil
 	}()
 
@@ -63,18 +73,18 @@ func CreateInstance(RegionId, InstanceType, ImageId, SecurityGroupId, PeriodUnit
 		} else {
 			errors.Message = tea.String(tryErr.Error())
 		}
-		return result, errors
+		return out, errors
 	}
-	return result, nil
+	return out, nil
 }
 
-func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period int32) (*ecs20140526.DescribePriceResponseBodyPriceInfoPrice, *tea.SDKError) {
-	var price *ecs20140526.DescribePriceResponseBodyPriceInfoPrice
+func DescribePriceWithOptions(regionId, instanceType, priceUnit string, period int32) (*types.DescribePriceResponse, *tea.SDKError) {
+	var out *types.DescribePriceResponse
 	describePriceRequest := &ecs20140526.DescribePriceRequest{
-		RegionId:     tea.String(RegionId),
-		InstanceType: tea.String(InstanceType),
-		PriceUnit:    tea.String(PriceUnit),
-		Period:       tea.Int32(Period),
+		RegionId:     tea.String(regionId),
+		InstanceType: tea.String(instanceType),
+		PriceUnit:    tea.String(priceUnit),
+		Period:       tea.Int32(period),
 	}
 	runtime := &util.RuntimeOptions{}
 
@@ -88,7 +98,12 @@ func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period i
 		if err != nil {
 			return err
 		}
-		price = result.Body.PriceInfo.Price
+		price := result.Body.PriceInfo.Price
+		out = &types.DescribePriceResponse{
+			Currency:      *price.Currency,
+			OriginalPrice: *price.OriginalPrice,
+			TradePrice:    *price.TradePrice,
+		}
 		return nil
 	}()
 	if tryErr != nil {
@@ -98,9 +113,9 @@ func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period i
 		} else {
 			errors.Message = tea.String(tryErr.Error())
 		}
-		return price, errors
+		return out, errors
 	}
-	return price, nil
+	return out, nil
 }
 
 func DescribeRegionsWithOptions() (*ecs20140526.DescribeRegionsResponse, *tea.SDKError) {
@@ -132,14 +147,14 @@ func DescribeRegionsWithOptions() (*ecs20140526.DescribeRegionsResponse, *tea.SD
 	return result, nil
 }
 
-func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memory float32) (*ecs20140526.DescribeRecommendInstanceTypeResponse, *tea.SDKError) {
+func DescribeRecommendInstanceTypeWithOptions(regionId string, cores int32, memory float32) (*ecs20140526.DescribeRecommendInstanceTypeResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeRecommendInstanceTypeResponse
 	var err error
 	describeRecommendInstanceTypeRequest := &ecs20140526.DescribeRecommendInstanceTypeRequest{
 		// NetworkType:        tea.String("vpc"),
-		RegionId:           tea.String(RegionId),
-		Cores:              tea.Int32(Cores),
-		Memory:             tea.Float32(Memory),
+		RegionId:           tea.String(regionId),
+		Cores:              tea.Int32(cores),
+		Memory:             tea.Float32(memory),
 		InstanceChargeType: tea.String("PrePaid"),
 	}
 	runtime := &util.RuntimeOptions{}
@@ -168,12 +183,12 @@ func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memo
 	return result, nil
 }
 
-func CreateSecurityGroup(RegionId string) (*ecs20140526.CreateSecurityGroupResponse, *tea.SDKError) {
+func CreateSecurityGroup(regionId string) (*ecs20140526.CreateSecurityGroupResponse, *tea.SDKError) {
 	var result *ecs20140526.CreateSecurityGroupResponse
 	var err error
 
 	createSecurityGroupRequest := &ecs20140526.CreateSecurityGroupRequest{
-		RegionId: tea.String(RegionId),
+		RegionId: tea.String(regionId),
 	}
 	runtime := &util.RuntimeOptions{}
 	tryErr := func() (_e error) {
@@ -201,12 +216,13 @@ func CreateSecurityGroup(RegionId string) (*ecs20140526.CreateSecurityGroupRespo
 	return result, nil
 }
 
-func DescribeImagesWithOptions(RegionId string) (*ecs20140526.DescribeImagesResponse, *tea.SDKError) {
+func DescribeImagesWithOptions(regionId, instanceType string) (*ecs20140526.DescribeImagesResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeImagesResponse
 	var err error
 
 	createSecurityGroupRequest := &ecs20140526.DescribeImagesRequest{
-		RegionId: tea.String(RegionId),
+		RegionId:     tea.String(regionId),
+		InstanceType: tea.String(instanceType),
 	}
 	runtime := &util.RuntimeOptions{}
 	tryErr := func() (_e error) {
@@ -234,11 +250,11 @@ func DescribeImagesWithOptions(RegionId string) (*ecs20140526.DescribeImagesResp
 	return result, nil
 }
 
-func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory float32) (*ecs20140526.DescribeAvailableResourceResponse, *tea.SDKError) {
+func DescribeAvailableResourceWithOptions(regionId string, cores int32, memory float32) (*ecs20140526.DescribeAvailableResourceResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeAvailableResourceResponse
 	var err error
 	describeAvailableResourceRequest := &ecs20140526.DescribeAvailableResourceRequest{
-		RegionId:            tea.String(RegionId),
+		RegionId:            tea.String(regionId),
 		DestinationResource: tea.String("InstanceType"),
 		InstanceChargeType:  tea.String("PrePaid"),
 		Cores:               tea.Int32(cores),

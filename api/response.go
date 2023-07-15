@@ -9,9 +9,9 @@ import (
 
 type jsonObject map[string]interface{}
 
-func respJSON(v interface{}) gin.H {
+func respJSON(code int, v interface{}) gin.H {
 	return gin.H{
-		"code": 0,
+		"code": code,
 		"data": v,
 	}
 }

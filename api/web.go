@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
+
 	"vps-provider/utils"
 
 	"vps-provider/services"
@@ -19,17 +19,14 @@ func describePrice(c *gin.Context) {
 	price, err := services.DescribePriceWithOptions(regionID, instanceType, priceUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code":  200,
-		"price": price,
-	}))
+
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, price))
 }
 
 func createInstance(c *gin.Context) {
@@ -39,21 +36,23 @@ func createInstance(c *gin.Context) {
 	securityGroupID := c.Query("securityGroupId")
 	periodUnit := c.Query("priceUnit")
 	period := utils.Str2Int32(c.Query("period"))
+
+	if periodUnit == "Year" {
+		periodUnit = "Month"
+		period = period * 12
+	}
+
 	result, err := services.CreateInstance(regionID, instanceType, imageID, securityGroupID, periodUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
 
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code": 200,
-		"data": result,
-	}))
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, result))
 }
 
 func describeRecommendInstanceType(c *gin.Context) {
@@ -63,20 +62,13 @@ func describeRecommendInstanceType(c *gin.Context) {
 	rsp, err := services.DescribeRecommendInstanceTypeWithOptions(regionID, cores, memory)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	if rsp == nil {
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code": 200,
-			"data": nil,
-		}))
-		return
-	}
+
 	var rpsData []string
 	for _, data := range rsp.Body.Data.RecommendInstanceType {
 		instanceType := data.InstanceType.InstanceType
@@ -85,29 +77,19 @@ func describeRecommendInstanceType(c *gin.Context) {
 		}
 		rpsData = append(rpsData, *instanceType)
 	}
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code": 200,
-		"data": rpsData,
-	}))
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, rpsData))
 }
 
 func describeImages(c *gin.Context) {
 	regionID := c.Query("regionId")
-	fmt.Println("RegionId:", regionID)
-	rsp, err := services.DescribeImagesWithOptions(regionID)
+	instanceType := c.Query("instanceType")
+	// fmt.Println("RegionId:", regionID)
+	rsp, err := services.DescribeImagesWithOptions(regionID, instanceType)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
-		}))
-		return
-	}
-	if rsp == nil {
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":   200,
-			"images": nil,
 		}))
 		return
 	}
@@ -119,10 +101,7 @@ func describeImages(c *gin.Context) {
 		}
 		rpsData = append(rpsData, *instanceType)
 	}
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code":   200,
-		"images": rpsData,
-	}))
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, rpsData))
 }
 
 func createSecurityGroup(c *gin.Context) {
@@ -130,17 +109,14 @@ func createSecurityGroup(c *gin.Context) {
 	rsp, err := services.CreateSecurityGroup(regionID)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code":              200,
-		"security_group_id": rsp.Body.SecurityGroupId,
-	}))
+
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, rsp.Body.SecurityGroupId))
 }
 
 func describeAvailableResource(c *gin.Context) {
@@ -150,50 +126,49 @@ func describeAvailableResource(c *gin.Context) {
 	rsp, err := services.DescribeAvailableResourceWithOptions(regionID, cores, memory)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	rpsData := make(map[string]string)
+
+	resources := make(map[string]string)
 	for _, data := range rsp.Body.AvailableZones.AvailableZone {
 		for _, resource := range data.AvailableResources.AvailableResource {
 			for _, sr := range resource.SupportedResources.SupportedResource {
-				rpsData[*sr.Value] = *sr.Status
+				resources[*sr.Value] = *sr.Status
 			}
 		}
 	}
 
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code": 200,
-		"data": rpsData,
-	}))
+	var rpsData []string
+	for value := range resources {
+		rpsData = append(rpsData, value)
+	}
+
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, rpsData))
 }
 
 func describeRegions(c *gin.Context) {
 	rsp, err := services.DescribeRegionsWithOptions()
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(jsonObject{
-			"code":    err.StatusCode,
+		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
 		return
 	}
-	list := make([]string, 0)
+
+	var rpsData []string
 	// fmt.Printf("Response: %+v\n", response)
 	for _, region := range rsp.Body.Regions.Region {
 		// fmt.Printf("Region ID: %s\n", region.RegionId)
-		list = append(list, *region.RegionId)
+		rpsData = append(rpsData, *region.RegionId)
 	}
 
-	c.JSON(http.StatusOK, respJSON(jsonObject{
-		"code":   200,
-		"images": list,
-	}))
+	c.JSON(http.StatusOK, respJSON(http.StatusOK, rpsData))
 }
 
 func homePage(c *gin.Context) {

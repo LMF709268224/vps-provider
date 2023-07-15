@@ -99,7 +99,7 @@
         <div style=" padding: 10px; display:flex; align-items: center;">
             <div>实例:</div>
             <el-select v-model="instanceValue" placeholder="请选择" style=" padding: 20px; ">
-                <el-option v-for="(item,instance) in instanceList" :key="instance" :label="instance" :value="instance">
+                <el-option v-for="(item,index) in instanceList" :key="index" :label="item" :value="item">
                 </el-option>
             </el-select>
         </div>
@@ -160,14 +160,13 @@
     </div>
 
     <script>
-
         new Vue({
             el: '#app',
             data: {
                 regionValue: '',
                 imgValue: '',
                 instanceValue: '',
-                unitValue: 'Hour',
+                unitValue: 'Week',
                 coresValue: 1,
                 memoryValue: 1,
                 periodValue: 1,
@@ -176,7 +175,6 @@
                 instanceList: [],
                 price: '',
                 unitList: [
-                    'Hour',
                     'Week',
                     'Month',
                     'Year',
@@ -190,18 +188,14 @@
             },
             watch: {
                 regionValue () {
-                    this.imgValue = '';
-                    this.instanceValue = '';
-                    this.getDescribeImages();
                     this.getDescribeType();
                 },
                 instanceValue () {
+                    this.getDescribeImages();
                     this.getPrice();
                 },
                 unitValue () {
-                    if (this.unitValue == 'Hour') {
-                        this.periodList = [1]
-                    } else if (this.unitValue == 'Week') {
+                    if (this.unitValue == 'Week') {
                         this.periodList = [1, 2, 3, 4]
                     } else if (this.unitValue == 'Month') {
                         this.periodList = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -222,59 +216,72 @@
                 },
             },
             methods: {
-                valueClick () {
-                    // console.log(this.value)
+                checkRes (res) {
+                    if (res.data.code !== 200) {
+                        this.$message(res.data.data.details)
+                        console.error(res.data.data.msg)
+                        return false
+                    }
+
+                    return true
                 },
                 getRegions () {
                     axios.get("/api/v1/describe_regions").then((res) => {
                         // console.log(res)
-                        if (res.data.data.code !== 200){
-                            this.$message(res.data.data.details)
+                        if (!this.checkRes(res)) {
+                            return
                         }
-                        this.list = res.data.data.images || [];
+                        this.list = res.data.data || [];
                         this.regionValue = this.list[0];
-                        this.getDescribeImages();
-                        this.getDescribeType();
                     })
                 },
                 getDescribeImages () {
-                    axios.get("/api/v1/describe_images?regionId=" + this.regionValue).then((res) => {
-                        if (res.data.data.code !== 200){
-                            this.$message(res.data.data.details)
+                    if (!this.instanceValue) {
+                        return false;
+                    }
+
+                    axios.get("/api/v1/describe_images?regionId=" + this.regionValue + "&instanceType=" + this.instanceValue).then((res) => {
+                        if (!this.checkRes(res)) {
+                            return
                         }
-                        this.imagesList = res.data.data.images || [];
+                        this.imagesList = res.data.data || [];
                         this.imgValue = this.imagesList[0];
                     })
                 },
 
                 getDescribeType () {
+                    this.instanceValue = '';
+                    this.imgValue = '';
+
                     axios.get("/api/v1/describe_instance_type?cores="
                         + this.coresValue + "&memory=" + this.memoryValue + "&regionId=" + this.regionValue).then((res) => {
-                        if (res.data.data.code !== 200){
-                            this.$message(res.data.data.details)
-                        }
-                            this.instanceList = res.data.data.data || [];
-                            this.getPrice();
+                            if (!this.checkRes(res)) {
+                                return
+                            }
+                            this.instanceList = res.data.data || [];
                             this.instanceValue = this.instanceList[0];
                         })
                 },
 
                 getPrice () {
-                    if (!this.checkValues(false)) {
-                        return
+                    if (!this.regionValue) {
+                        return false;
+                    }
+                    if (!this.instanceValue) {
+                        return false;
                     }
 
                     axios.get("/api/v1/describe_price?regionId=" + this.regionValue +
                         "&instanceType=" + this.instanceValue +
                         "&priceUnit=" + this.unitValue +
                         "&period=" + this.periodValue).then((res) => {
-                        if (res.data.data.code !== 200){
-                            this.$message(res.data.data.details)
-                        }
+                            if (!this.checkRes(res)) {
+                                return
+                            }
                             const originalPrice = document.getElementById('originalPrice');
-                            originalPrice.innerHTML = res.data.data.price.OriginalPrice;
+                            originalPrice.innerHTML = res.data.data.OriginalPrice;
                             const tradePrice = document.getElementById('tradePrice');
-                            tradePrice.innerHTML = res.data.data.price.TradePrice;
+                            tradePrice.innerHTML = res.data.data.TradePrice;
                         })
                 },
 
@@ -309,7 +316,12 @@
                     this.showLoading()
 
                     axios.get("/api/v1/create_security_group?regionId=" + this.regionValue).then((res) => {
-                        securityGroupId = res.data.data.security_group_id;
+                        if (!this.checkRes(res)) {
+                            this.hideLoading()
+                            return
+                        }
+
+                        securityGroupId = res.data.data;
 
                         axios.get("/api/v1/create_instance?regionId=" + this.regionValue +
                             "&instanceType=" + this.instanceValue +
@@ -317,21 +329,21 @@
                             "&securityGroupId=" + securityGroupId +
                             "&priceUnit=" + this.unitValue +
                             "&period=" + this.periodValue).then((res) => {
-                                console.log(res)
-                            if (res.data.data.code !== 200){
-                                this.$message(res.data.data.details)
-                            }
+                                // console.log(res)
                                 this.hideLoading()
+                                if (!this.checkRes(res)) {
+                                    return
+                                }
                                 document.getElementById("buyResults").style.display = "block";
 
                                 const instanceIDLabel = document.getElementById('InstanceId');
-                                instanceIDLabel.innerHTML = res.data.data.data.body.InstanceId;
+                                instanceIDLabel.innerHTML = res.data.data.InstanceId;
                                 const orderIDLabel = document.getElementById('OrderId');
-                                orderIDLabel.innerHTML = res.data.data.data.body.OrderId;
+                                orderIDLabel.innerHTML = res.data.data.OrderId;
                                 const requestIDLabel = document.getElementById('RequestId');
-                                requestIDLabel.innerHTML = res.data.data.data.body.RequestId;
+                                requestIDLabel.innerHTML = res.data.data.RequestId;
                                 const tradePriceLabel = document.getElementById('TradePrice');
-                                tradePriceLabel.innerHTML = res.data.data.data.body.TradePrice;
+                                tradePriceLabel.innerHTML = res.data.data.TradePrice;
                             }).catch((error) => {
                                 console.error('Error:', error);
                             });

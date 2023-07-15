@@ -1,12 +1,14 @@
 package api
 
 import (
+	"time"
+
+	"vps-provider/config"
+	"vps-provider/services"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
-	"time"
-	"vps-provider/config"
-	"vps-provider/services"
 )
 
 var log = logging.Logger("api")
@@ -71,7 +73,7 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 	// apiV1.POST("/login", authMiddleware.LoginHandler)
 	// apiV1.POST("/logout", authMiddleware.LogoutHandler)
 	apiV1.GET("/describe_price", describePrice)
-	apiV1.GET("/describe_instance_type", describeRecommendInstanceType)
+	apiV1.GET("/describe_instance_type", describeAvailableResource)
 	apiV1.GET("/describe_images", describeImages)
 	apiV1.GET("/describe_regions", describeRegions)
 	apiV1.GET("/create_security_group", createSecurityGroup)

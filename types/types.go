@@ -13,3 +13,16 @@ type User struct {
 	// Role      int32     `db:"role" json:"role"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
+
+type DescribePriceResponse struct {
+	Currency      string
+	OriginalPrice float32
+	TradePrice    float32
+}
+
+type CreateInstanceResponse struct {
+	InstanceId string
+	OrderId    string
+	RequestId  string
+	TradePrice float32
+}
