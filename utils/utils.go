@@ -87,3 +87,17 @@ func StrToMap(str string) map[string]interface{} {
 	}
 	return out
 }
+func Str2Int32(s string) int32 {
+	n, _ := strconv.Atoi(s)
+	num := int32(n)
+	return num
+}
+
+func Str2Float32(s string) float32 {
+	ret, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		log.Error(err.Error())
+		return 0.00
+	}
+	return float32(ret)
+}

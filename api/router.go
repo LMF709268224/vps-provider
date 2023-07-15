@@ -1,15 +1,12 @@
 package api
 
 import (
-	"time"
-	"vps-provider/services"
-
-	"vps-provider/config"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
-
-	"github.com/gin-contrib/cors"
+	"time"
+	"vps-provider/config"
+	"vps-provider/services"
 )
 
 var log = logging.Logger("api")
@@ -41,7 +38,7 @@ func NewServer(cfg config.Config) (*Server, error) {
 	return s, nil
 }
 
-// Run run server
+// Run server
 func (s *Server) Run() {
 	err := s.router.Run(s.cfg.APIListen)
 	if err != nil {
@@ -49,7 +46,7 @@ func (s *Server) Run() {
 	}
 }
 
-// Close close server
+// Close server
 func (s *Server) Close() {
 }
 

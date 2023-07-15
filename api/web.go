@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strconv"
-
 	"vps-provider/utils"
 
 	"vps-provider/services"
@@ -17,7 +15,7 @@ func describePrice(c *gin.Context) {
 	regionID := c.Query("regionId")
 	instanceType := c.Query("instanceType")
 	priceUnit := c.Query("priceUnit")
-	period := str2Int32(c.Query("period"))
+	period := utils.Str2Int32(c.Query("period"))
 	price, err := services.DescribePriceWithOptions(regionID, instanceType, priceUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
@@ -39,7 +37,7 @@ func createInstance(c *gin.Context) {
 	imageID := c.Query("imageId")
 	securityGroupID := c.Query("securityGroupId")
 	periodUnit := c.Query("priceUnit")
-	period := str2Int32(c.Query("period"))
+	period := utils.Str2Int32(c.Query("period"))
 	result, err := services.CreateInstance(regionID, instanceType, imageID, securityGroupID, periodUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
@@ -57,9 +55,9 @@ func createInstance(c *gin.Context) {
 }
 
 func describeRecommendInstanceType(c *gin.Context) {
-	cores := str2Int32(c.Query("cores"))
+	cores := utils.Str2Int32(c.Query("cores"))
 	regionID := c.Query("regionId")
-	memory := str2Float32(c.Query("memory"))
+	memory := utils.Str2Float32(c.Query("memory"))
 	rsp, err := services.DescribeRecommendInstanceTypeWithOptions(regionID, cores, memory)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
@@ -140,8 +138,8 @@ func createSecurityGroup(c *gin.Context) {
 
 func describeAvailableResource(c *gin.Context) {
 	regionID := c.Query("regionId")
-	cores := str2Int32(c.Query("cores"))
-	memory := str2Float32(c.Query("memory"))
+	cores := utils.Str2Int32(c.Query("cores"))
+	memory := utils.Str2Float32(c.Query("memory"))
 	rsp, err := services.DescribeAvailableResourceWithOptions(regionID, cores, memory)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
@@ -164,21 +162,6 @@ func describeAvailableResource(c *gin.Context) {
 	c.JSON(http.StatusOK, respJSON(jsonObject{
 		"data": rpsData,
 	}))
-}
-
-func str2Int32(s string) int32 {
-	n, _ := strconv.Atoi(s)
-	num := int32(n)
-	return num
-}
-
-func str2Float32(s string) float32 {
-	ret, err := strconv.ParseFloat(s, 32)
-	if err != nil {
-		log.Error(err.Error())
-		return 0.00
-	}
-	return float32(ret)
 }
 
 func describeRegions(c *gin.Context) {

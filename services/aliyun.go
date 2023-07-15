@@ -1,23 +1,14 @@
 package services
 
 import (
-	"fmt"
-
-	"vps-provider/config"
-
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	ecs20140526 "github.com/alibabacloud-go/ecs-20140526/v2/client"
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/alibabacloud-go/tea/tea"
+	"vps-provider/config"
 )
 
-/**
- * 使用AK&SK初始化账号Client
- * @param config.Cfg.AliyunAccessKeyID
- * @param config.Cfg.AliyunAccessKeySecret
- * @return Client
- * @throws Exception
- */
+// ClientInit /**
 func ClientInit() error {
 	configClient := &openapi.Config{
 		AccessKeyId:     tea.String(config.Cfg.AliyunAccessKeyID),
@@ -60,7 +51,6 @@ func CreateInstance(RegionId, InstanceType, ImageId, SecurityGroupId, PeriodUnit
 
 		result, err = AliClient.CreateInstanceWithOptions(createInstanceRequest, runtime)
 		if err != nil {
-			fmt.Errorf("CreateInstanceWithOptions %v", err)
 			return err
 		}
 		return nil
@@ -96,7 +86,6 @@ func DescribePriceWithOptions(RegionId, InstanceType, PriceUnit string, Period i
 		}()
 		result, err := AliClient.DescribePriceWithOptions(describePriceRequest, runtime)
 		if err != nil {
-			fmt.Errorf("DescribePriceWithOptions:%v", err)
 			return err
 		}
 		price = result.Body.PriceInfo.Price
@@ -162,7 +151,6 @@ func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memo
 		}()
 		result, err = AliClient.DescribeRecommendInstanceTypeWithOptions(describeRecommendInstanceTypeRequest, runtime)
 		if err != nil {
-			fmt.Errorf("DescribeRecommendInstanceTypeWithOptions %v", err)
 			return err
 		}
 		return nil
@@ -174,11 +162,6 @@ func DescribeRecommendInstanceTypeWithOptions(RegionId string, Cores int32, Memo
 			errors = _t
 		} else {
 			errors.Message = tea.String(tryErr.Error())
-		}
-		// 如有需要，请打印 error
-		errString := util.AssertAsString(errors.Message)
-		if errString != nil {
-			fmt.Println(*errString)
 		}
 		return result, errors
 	}
@@ -201,7 +184,6 @@ func CreateSecurityGroup(RegionId string) (*ecs20140526.CreateSecurityGroupRespo
 		}()
 		result, err = AliClient.CreateSecurityGroupWithOptions(createSecurityGroupRequest, runtime)
 		if err != nil {
-			fmt.Errorf("%v", err)
 			return err
 		}
 		return nil
@@ -235,7 +217,6 @@ func DescribeImagesWithOptions(RegionId string) (*ecs20140526.DescribeImagesResp
 		}()
 		result, err = AliClient.DescribeImagesWithOptions(createSecurityGroupRequest, runtime)
 		if err != nil {
-			fmt.Errorf("%v", err)
 			return err
 		}
 		return nil
@@ -272,7 +253,6 @@ func DescribeAvailableResourceWithOptions(RegionId string, cores int32, memory f
 		}()
 		result, err = AliClient.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
 		if err != nil {
-			fmt.Errorf("%v", err)
 			return err
 		}
 		return nil
