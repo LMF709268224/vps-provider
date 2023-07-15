@@ -2,6 +2,7 @@ Mode = "debug"
 ApiListen = ":5566"
 DatabaseURL = "user01:sql001@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 SecretKey = "test"
+DryRun = true
 AliyunAccessKeyID = ""
 AliyunAccessKeySecret = ""
 

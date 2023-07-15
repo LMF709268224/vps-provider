@@ -12,6 +12,7 @@ type Config struct {
 	RedisAddr             string
 	RedisPassword         string
 	Email                 EmailConfig
+	DryRun                bool
 	AliyunAccessKeyID     string
 	AliyunAccessKeySecret string
 }

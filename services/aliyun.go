@@ -35,7 +35,7 @@ func CreateInstance(regionId, instanceType, imageId, securityGroupId, periodUnit
 	createInstanceRequest := &ecs20140526.CreateInstanceRequest{
 		RegionId:           tea.String(regionId),
 		InstanceType:       tea.String(instanceType),
-		DryRun:             tea.Bool(false),
+		DryRun:             tea.Bool(config.Cfg.DryRun),
 		ImageId:            tea.String(imageId),
 		SecurityGroupId:    tea.String(securityGroupId),
 		InstanceChargeType: tea.String("PrePaid"),
