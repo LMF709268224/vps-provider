@@ -27,6 +27,7 @@ func describePrice(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code":  200,
 		"price": price,
 	}))
 }
@@ -50,6 +51,7 @@ func createInstance(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code": 200,
 		"data": result,
 	}))
 }
@@ -70,6 +72,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 	}
 	if rsp == nil {
 		c.JSON(http.StatusOK, respJSON(jsonObject{
+			"code": 200,
 			"data": nil,
 		}))
 		return
@@ -83,6 +86,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 		rpsData = append(rpsData, *instanceType)
 	}
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code": 200,
 		"data": rpsData,
 	}))
 }
@@ -102,6 +106,7 @@ func describeImages(c *gin.Context) {
 	}
 	if rsp == nil {
 		c.JSON(http.StatusOK, respJSON(jsonObject{
+			"code":   200,
 			"images": nil,
 		}))
 		return
@@ -115,6 +120,7 @@ func describeImages(c *gin.Context) {
 		rpsData = append(rpsData, *instanceType)
 	}
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code":   200,
 		"images": rpsData,
 	}))
 }
@@ -132,6 +138,7 @@ func createSecurityGroup(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code":              200,
 		"security_group_id": rsp.Body.SecurityGroupId,
 	}))
 }
@@ -160,6 +167,7 @@ func describeAvailableResource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code": 200,
 		"data": rpsData,
 	}))
 }
@@ -183,6 +191,7 @@ func describeRegions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, respJSON(jsonObject{
+		"code":   200,
 		"images": list,
 	}))
 }

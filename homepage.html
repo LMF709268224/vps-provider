@@ -226,8 +226,11 @@
                     // console.log(this.value)
                 },
                 getRegions () {
-                    axios.get("http://192.168.0.78:5566/api/v1/describe_regions").then((res) => {
+                    axios.get("/api/v1/describe_regions").then((res) => {
                         // console.log(res)
+                        if (res.data.data.code !== 200){
+                            this.$message(res.data.data.details)
+                        }
                         this.list = res.data.data.images || [];
                         this.regionValue = this.list[0];
                         this.getDescribeImages();
@@ -235,15 +238,21 @@
                     })
                 },
                 getDescribeImages () {
-                    axios.get("http://192.168.0.78:5566/api/v1/describe_images?regionId=" + this.regionValue).then((res) => {
+                    axios.get("/api/v1/describe_images?regionId=" + this.regionValue).then((res) => {
+                        if (res.data.data.code !== 200){
+                            this.$message(res.data.data.details)
+                        }
                         this.imagesList = res.data.data.images || [];
                         this.imgValue = this.imagesList[0];
                     })
                 },
 
                 getDescribeType () {
-                    axios.get("http://192.168.0.78:5566/api/v1/describe_instance_type?cores="
+                    axios.get("/api/v1/describe_instance_type?cores="
                         + this.coresValue + "&memory=" + this.memoryValue + "&regionId=" + this.regionValue).then((res) => {
+                        if (res.data.data.code !== 200){
+                            this.$message(res.data.data.details)
+                        }
                             this.instanceList = res.data.data.data || [];
                             this.getPrice();
                             this.instanceValue = this.instanceList[0];
@@ -255,10 +264,13 @@
                         return
                     }
 
-                    axios.get("http://192.168.0.78:5566/api/v1/describe_price?regionId=" + this.regionValue +
+                    axios.get("/api/v1/describe_price?regionId=" + this.regionValue +
                         "&instanceType=" + this.instanceValue +
                         "&priceUnit=" + this.unitValue +
                         "&period=" + this.periodValue).then((res) => {
+                        if (res.data.data.code !== 200){
+                            this.$message(res.data.data.details)
+                        }
                             const originalPrice = document.getElementById('originalPrice');
                             originalPrice.innerHTML = res.data.data.price.OriginalPrice;
                             const tradePrice = document.getElementById('tradePrice');
@@ -296,17 +308,19 @@
 
                     this.showLoading()
 
-                    axios.get("http://192.168.0.78:5566/api/v1/create_security_group?regionId=" + this.regionValue).then((res) => {
+                    axios.get("/api/v1/create_security_group?regionId=" + this.regionValue).then((res) => {
                         securityGroupId = res.data.data.security_group_id;
 
-                        axios.get("http://192.168.0.78:5566/api/v1/create_instance?regionId=" + this.regionValue +
+                        axios.get("/api/v1/create_instance?regionId=" + this.regionValue +
                             "&instanceType=" + this.instanceValue +
                             "&imageId=" + this.imgValue +
                             "&securityGroupId=" + securityGroupId +
                             "&priceUnit=" + this.unitValue +
                             "&period=" + this.periodValue).then((res) => {
                                 console.log(res)
-
+                            if (res.data.data.code !== 200){
+                                this.$message(res.data.data.details)
+                            }
                                 this.hideLoading()
                                 document.getElementById("buyResults").style.display = "block";
 
