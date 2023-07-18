@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"vps-provider/config"
-	"vps-provider/services"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -53,10 +52,6 @@ func (s *Server) Close() {
 }
 
 func configRouter(router *gin.Engine, cfg config.Config) {
-	err := services.ClientInit()
-	if err != nil {
-		log.Fatal(err)
-	}
 	apiV1 := router.Group("/api/v1")
 	// authMiddleware, err := jwtGinMiddleware(cfg.SecretKey)
 	// if err != nil {

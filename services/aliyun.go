@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"vps-provider/config"
 	"vps-provider/types"
 
@@ -10,27 +12,68 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 )
 
+const (
+	defaultRegionId = "cn-hangzhou"
+)
+
 // ClientInit /**
-func ClientInit() error {
+// func ClientInit() error {
+// 	configClient := &openapi.Config{
+// 		AccessKeyId:     tea.String(config.Cfg.AliyunAccessKeyID),
+// 		AccessKeySecret: tea.String(config.Cfg.AliyunAccessKeySecret),
+// 	}
+// 	configClient.Endpoint = tea.String("ecs-cn-hangzhou.aliyuncs.com")
+// 	result := &ecs20140526.Client{}
+// 	result, err := ecs20140526.NewClient(configClient)
+// 	AliClient = result
+// 	return err
+// }
+
+// ClientInit /**
+func newClient(regionId string) (*ecs20140526.Client, *tea.SDKError) {
 	configClient := &openapi.Config{
 		AccessKeyId:     tea.String(config.Cfg.AliyunAccessKeyID),
 		AccessKeySecret: tea.String(config.Cfg.AliyunAccessKeySecret),
 	}
-	configClient.Endpoint = tea.String("ecs-cn-hangzhou.aliyuncs.com")
-	result := &ecs20140526.Client{}
-	result, err := ecs20140526.NewClient(configClient)
-	AliClient = result
-	return err
+
+	var endpoint string
+
+	switch regionId {
+	case "cn-hangzhou":
+		endpoint = fmt.Sprintf("ecs-%s.aliyuncs.com", regionId)
+	default:
+		endpoint = fmt.Sprintf("ecs.%s.aliyuncs.com", regionId)
+	}
+
+	configClient.Endpoint = tea.String(endpoint)
+
+	client, err := ecs20140526.NewClient(configClient)
+	if err != nil {
+		errors := &tea.SDKError{}
+		if _t, ok := err.(*tea.SDKError); ok {
+			errors = _t
+		} else {
+			errors.Message = tea.String(err.Error())
+		}
+		return nil, errors
+	}
+
+	return client, nil
 }
 
-type Client struct {
-	ecs20140526.Client
-}
+// type Client struct {
+// 	ecs20140526.Client
+// }
 
-var AliClient *ecs20140526.Client
+// var AliClient *ecs20140526.Client
 
 func CreateInstance(regionId, instanceType, imageId, password, securityGroupId, periodUnit string, period int32) (*types.CreateInstanceResponse, *tea.SDKError) {
 	var out *types.CreateInstanceResponse
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
 
 	createInstanceRequest := &ecs20140526.CreateInstanceRequest{
 		RegionId:                tea.String(regionId),
@@ -54,7 +97,7 @@ func CreateInstance(regionId, instanceType, imageId, password, securityGroupId, 
 			}
 		}()
 
-		result, err := AliClient.CreateInstanceWithOptions(createInstanceRequest, runtime)
+		result, err := client.CreateInstanceWithOptions(createInstanceRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -84,6 +127,11 @@ func CreateInstance(regionId, instanceType, imageId, password, securityGroupId, 
 func RunInstances(regionId, instanceType, imageId, password, securityGroupId, periodUnit string, period int32) (*types.CreateInstanceResponse, *tea.SDKError) {
 	var out *types.CreateInstanceResponse
 
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
+
 	createInstanceRequest := &ecs20140526.RunInstancesRequest{
 		RegionId:           tea.String(regionId),
 		InstanceType:       tea.String(instanceType),
@@ -107,7 +155,7 @@ func RunInstances(regionId, instanceType, imageId, password, securityGroupId, pe
 			}
 		}()
 
-		result, err := AliClient.RunInstancesWithOptions(createInstanceRequest, runtime)
+		result, err := client.RunInstancesWithOptions(createInstanceRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -135,6 +183,11 @@ func RunInstances(regionId, instanceType, imageId, password, securityGroupId, pe
 }
 
 func StartInstance(regionId, instanceId string) *tea.SDKError {
+	client, err := newClient(regionId)
+	if err != nil {
+		return err
+	}
+
 	startInstancesRequest := &ecs20140526.StartInstancesRequest{
 		RegionId:   tea.String(regionId),
 		InstanceId: tea.StringSlice([]string{instanceId}),
@@ -148,7 +201,7 @@ func StartInstance(regionId, instanceId string) *tea.SDKError {
 			}
 		}()
 
-		_, err := AliClient.StartInstancesWithOptions(startInstancesRequest, runtime)
+		_, err := client.StartInstancesWithOptions(startInstancesRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -171,6 +224,11 @@ func StartInstance(regionId, instanceId string) *tea.SDKError {
 func DescribeSecurityGroups(regionId string) ([]string, *tea.SDKError) {
 	var out []string
 
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
+
 	describeSecurityGroupsRequest := &ecs20140526.DescribeSecurityGroupsRequest{
 		RegionId: tea.String(regionId),
 		// NetworkType: tea.String("classic"),
@@ -184,7 +242,7 @@ func DescribeSecurityGroups(regionId string) ([]string, *tea.SDKError) {
 			}
 		}()
 
-		response, err := AliClient.DescribeSecurityGroupsWithOptions(describeSecurityGroupsRequest, runtime)
+		response, err := client.DescribeSecurityGroupsWithOptions(describeSecurityGroupsRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -209,8 +267,13 @@ func DescribeSecurityGroups(regionId string) ([]string, *tea.SDKError) {
 	return out, nil
 }
 
-func DescribeInstanceAttribute(instanceId string) (*ecs20140526.DescribeInstanceAttributeResponse, *tea.SDKError) {
+func DescribeInstanceAttribute(regionId, instanceId string) (*ecs20140526.DescribeInstanceAttributeResponse, *tea.SDKError) {
 	var out *ecs20140526.DescribeInstanceAttributeResponse
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
 
 	describeInstanceAttributeRequest := &ecs20140526.DescribeInstanceAttributeRequest{
 		InstanceId: tea.String(instanceId),
@@ -224,7 +287,7 @@ func DescribeInstanceAttribute(instanceId string) (*ecs20140526.DescribeInstance
 			}
 		}()
 
-		result, err := AliClient.DescribeInstanceAttributeWithOptions(describeInstanceAttributeRequest, runtime)
+		result, err := client.DescribeInstanceAttributeWithOptions(describeInstanceAttributeRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -246,8 +309,13 @@ func DescribeInstanceAttribute(instanceId string) (*ecs20140526.DescribeInstance
 	return out, nil
 }
 
-func AllocatePublicIpAddress(instanceId string) (string, *tea.SDKError) {
+func AllocatePublicIpAddress(regionId, instanceId string) (string, *tea.SDKError) {
 	var out string
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
 
 	allocatePublicIpAddressRequest := &ecs20140526.AllocatePublicIpAddressRequest{
 		InstanceId: tea.String(instanceId),
@@ -261,7 +329,7 @@ func AllocatePublicIpAddress(instanceId string) (string, *tea.SDKError) {
 			}
 		}()
 
-		result, err := AliClient.AllocatePublicIpAddressWithOptions(allocatePublicIpAddressRequest, runtime)
+		result, err := client.AllocatePublicIpAddressWithOptions(allocatePublicIpAddressRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -285,6 +353,12 @@ func AllocatePublicIpAddress(instanceId string) (string, *tea.SDKError) {
 
 func DescribePrice(regionId, instanceType, priceUnit, imageId string, period int32) (*types.DescribePriceResponse, *tea.SDKError) {
 	var out *types.DescribePriceResponse
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
+
 	describePriceRequest := &ecs20140526.DescribePriceRequest{
 		RegionId:     tea.String(regionId),
 		InstanceType: tea.String(instanceType),
@@ -300,7 +374,7 @@ func DescribePrice(regionId, instanceType, priceUnit, imageId string, period int
 				_e = r
 			}
 		}()
-		result, err := AliClient.DescribePriceWithOptions(describePriceRequest, runtime)
+		result, err := client.DescribePriceWithOptions(describePriceRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -325,6 +399,11 @@ func DescribePrice(regionId, instanceType, priceUnit, imageId string, period int
 }
 
 func AuthorizeSecurityGroup(regionId, securityGroupId string) *tea.SDKError {
+	client, err := newClient(regionId)
+	if err != nil {
+		return err
+	}
+
 	authorizeSecurityGroupRequest := &ecs20140526.AuthorizeSecurityGroupRequest{
 		RegionId:        tea.String(regionId),
 		SecurityGroupId: tea.String(securityGroupId),
@@ -345,7 +424,7 @@ func AuthorizeSecurityGroup(regionId, securityGroupId string) *tea.SDKError {
 				_e = r
 			}
 		}()
-		_, err := AliClient.AuthorizeSecurityGroupWithOptions(authorizeSecurityGroupRequest, runtime)
+		_, err := client.AuthorizeSecurityGroupWithOptions(authorizeSecurityGroupRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -365,19 +444,25 @@ func AuthorizeSecurityGroup(regionId, securityGroupId string) *tea.SDKError {
 }
 
 func DescribeRegions() (*ecs20140526.DescribeRegionsResponse, *tea.SDKError) {
+	client, err := newClient(defaultRegionId)
+	if err != nil {
+		return nil, err
+	}
+
 	var result *ecs20140526.DescribeRegionsResponse
 	describeRegionsRequest := &ecs20140526.DescribeRegionsRequest{}
 	runtime := &util.RuntimeOptions{}
-	var err error
+
 	tryErr := func() (_e error) {
 		defer func() {
 			if r := tea.Recover(recover()); r != nil {
 				_e = r
 			}
 		}()
-		result, err = AliClient.DescribeRegionsWithOptions(describeRegionsRequest, runtime)
-		if err != nil {
-			return err
+
+		result, _e = client.DescribeRegionsWithOptions(describeRegionsRequest, runtime)
+		if _e != nil {
+			return _e
 		}
 		return nil
 	}()
@@ -395,7 +480,12 @@ func DescribeRegions() (*ecs20140526.DescribeRegionsResponse, *tea.SDKError) {
 
 func DescribeRecommendInstanceType(regionId string, cores int32, memory float32) (*ecs20140526.DescribeRecommendInstanceTypeResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeRecommendInstanceTypeResponse
-	var err error
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return result, err
+	}
+
 	describeRecommendInstanceTypeRequest := &ecs20140526.DescribeRecommendInstanceTypeRequest{
 		NetworkType:        tea.String("vpc"),
 		RegionId:           tea.String(regionId),
@@ -403,6 +493,7 @@ func DescribeRecommendInstanceType(regionId string, cores int32, memory float32)
 		Memory:             tea.Float32(memory),
 		InstanceChargeType: tea.String("PrePaid"),
 	}
+
 	runtime := &util.RuntimeOptions{}
 	tryErr := func() (_e error) {
 		defer func() {
@@ -410,9 +501,9 @@ func DescribeRecommendInstanceType(regionId string, cores int32, memory float32)
 				_e = r
 			}
 		}()
-		result, err = AliClient.DescribeRecommendInstanceTypeWithOptions(describeRecommendInstanceTypeRequest, runtime)
-		if err != nil {
-			return err
+		result, _e = client.DescribeRecommendInstanceTypeWithOptions(describeRecommendInstanceTypeRequest, runtime)
+		if _e != nil {
+			return _e
 		}
 		return nil
 	}()
@@ -431,6 +522,12 @@ func DescribeRecommendInstanceType(regionId string, cores int32, memory float32)
 
 func CreateSecurityGroup(regionId string) (string, *tea.SDKError) {
 	var out string
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return out, err
+	}
+
 	createSecurityGroupRequest := &ecs20140526.CreateSecurityGroupRequest{
 		RegionId: tea.String(regionId),
 	}
@@ -441,7 +538,7 @@ func CreateSecurityGroup(regionId string) (string, *tea.SDKError) {
 				_e = r
 			}
 		}()
-		result, err := AliClient.CreateSecurityGroupWithOptions(createSecurityGroupRequest, runtime)
+		result, err := client.CreateSecurityGroupWithOptions(createSecurityGroupRequest, runtime)
 		if err != nil {
 			return err
 		}
@@ -464,7 +561,11 @@ func CreateSecurityGroup(regionId string) (string, *tea.SDKError) {
 
 func DescribeImages(regionId, instanceType string) (*ecs20140526.DescribeImagesResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeImagesResponse
-	var err error
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return result, err
+	}
 
 	createSecurityGroupRequest := &ecs20140526.DescribeImagesRequest{
 		RegionId:     tea.String(regionId),
@@ -477,9 +578,9 @@ func DescribeImages(regionId, instanceType string) (*ecs20140526.DescribeImagesR
 				_e = r
 			}
 		}()
-		result, err = AliClient.DescribeImagesWithOptions(createSecurityGroupRequest, runtime)
-		if err != nil {
-			return err
+		result, _e = client.DescribeImagesWithOptions(createSecurityGroupRequest, runtime)
+		if _e != nil {
+			return _e
 		}
 		return nil
 	}()
@@ -498,7 +599,12 @@ func DescribeImages(regionId, instanceType string) (*ecs20140526.DescribeImagesR
 
 func DescribeAvailableResource(regionId string, cores int32, memory float32) (*ecs20140526.DescribeAvailableResourceResponse, *tea.SDKError) {
 	var result *ecs20140526.DescribeAvailableResourceResponse
-	var err error
+
+	client, err := newClient(regionId)
+	if err != nil {
+		return result, err
+	}
+
 	describeAvailableResourceRequest := &ecs20140526.DescribeAvailableResourceRequest{
 		RegionId:            tea.String(regionId),
 		DestinationResource: tea.String("InstanceType"),
@@ -513,9 +619,9 @@ func DescribeAvailableResource(regionId string, cores int32, memory float32) (*e
 				_e = r
 			}
 		}()
-		result, err = AliClient.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
-		if err != nil {
-			return err
+		result, _e = client.DescribeAvailableResourceWithOptions(describeAvailableResourceRequest, runtime)
+		if _e != nil {
+			return _e
 		}
 		return nil
 	}()

@@ -59,6 +59,7 @@ func createInstance(c *gin.Context) {
 				"msg":     err.Code,
 				"details": data["Message"],
 			}))
+			fmt.Println("CreateSecurityGroup err:", err.Error())
 			return
 		}
 	}
@@ -76,7 +77,7 @@ func createInstance(c *gin.Context) {
 		return
 	}
 
-	address, err := services.AllocatePublicIpAddress(result.InstanceId)
+	address, err := services.AllocatePublicIpAddress(regionID, result.InstanceId)
 	if err != nil {
 		fmt.Println("AllocatePublicIpAddress err:", err.Error())
 	} else {
@@ -114,6 +115,7 @@ func describeRecommendInstanceType(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("DescribeRecommendInstanceType rsp:", rsp)
 	resources := make(map[string]string)
 	for _, data := range rsp.Body.Data.RecommendInstanceType {
 		instanceType := data.InstanceType.InstanceType
@@ -142,6 +144,7 @@ func describeImages(c *gin.Context) {
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
+		fmt.Println("DescribeImages err:", err.Error())
 		return
 	}
 	var rpsData []string
