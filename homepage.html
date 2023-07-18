@@ -133,6 +133,9 @@
         </div>
 
         <div style="padding: 10px; display:flex; align-items: center;">
+            <div>密码:</div>
+            <input type="text" id="password" min="8" max="20">
+
             <el-button type="success" @click="getClick">购买</el-button>
         </div>
 
@@ -155,6 +158,11 @@
             <div class="priceColor">
                 <div>成交价:</div>
                 <div id="TradePrice"></div>
+            </div>
+
+            <div class="priceColor">
+                <div>IP地址:</div>
+                <div id="PublicIpAddress"></div>
             </div>
         </div>
     </div>
@@ -192,6 +200,8 @@
                 },
                 instanceValue () {
                     this.getDescribeImages();
+                },
+                imgValue () {
                     this.getPrice();
                 },
                 unitValue () {
@@ -264,16 +274,14 @@
                 },
 
                 getPrice () {
-                    if (!this.regionValue) {
-                        return false;
-                    }
-                    if (!this.instanceValue) {
-                        return false;
+                    if (!this.checkValues(false)) {
+                        return
                     }
 
                     axios.get("/api/v1/describe_price?regionId=" + this.regionValue +
                         "&instanceType=" + this.instanceValue +
                         "&priceUnit=" + this.unitValue +
+                        "&imageId=" + this.imgValue +
                         "&period=" + this.periodValue).then((res) => {
                             if (!this.checkRes(res)) {
                                 return
@@ -308,50 +316,61 @@
                     return true;
                 },
 
+                checkPassword (text) {
+                    if (!text) {
+                        this.$message('请输入密码');
+                        return false;
+                    }
+                    return true
+                },
+
                 getClick () {
+                    document.getElementById("buyResults").style.display = "none";
+
                     if (!this.checkValues(true)) {
                         return
                     }
 
+                    password = document.getElementById('password').value;
+                    if (!this.checkPassword(password)) {
+                        return
+                    }
+                    console.log(password)
+
                     this.showLoading()
 
-                    axios.get("/api/v1/create_security_group?regionId=" + this.regionValue).then((res) => {
-                        if (!this.checkRes(res)) {
+                    axios.get("/api/v1/create_instance?regionId=" + this.regionValue +
+                        "&instanceType=" + this.instanceValue +
+                        "&imageId=" + this.imgValue +
+                        "&priceUnit=" + this.unitValue +
+                        "&period=" + this.periodValue +
+                        "&password=" + password).then((res) => {
+                            // console.log(res)
                             this.hideLoading()
-                            return
-                        }
+                            if (!this.checkRes(res)) {
+                                return
+                            }
+                            document.getElementById("buyResults").style.display = "block";
 
-                        securityGroupId = res.data.data;
+                            const instanceIDLabel = document.getElementById('InstanceId');
+                            instanceIDLabel.innerHTML = res.data.data.InstanceId;
+                            const orderIDLabel = document.getElementById('OrderId');
+                            orderIDLabel.innerHTML = res.data.data.OrderId;
+                            const requestIDLabel = document.getElementById('RequestId');
+                            requestIDLabel.innerHTML = res.data.data.RequestId;
+                            const tradePriceLabel = document.getElementById('TradePrice');
+                            tradePriceLabel.innerHTML = res.data.data.TradePrice;
+                            const publicIpAddressLabel = document.getElementById('PublicIpAddress');
+                            publicIpAddressLabel.innerHTML = res.data.data.PublicIpAddress;
 
-                        axios.get("/api/v1/create_instance?regionId=" + this.regionValue +
-                            "&instanceType=" + this.instanceValue +
-                            "&imageId=" + this.imgValue +
-                            "&securityGroupId=" + securityGroupId +
-                            "&priceUnit=" + this.unitValue +
-                            "&period=" + this.periodValue).then((res) => {
-                                // console.log(res)
-                                this.hideLoading()
-                                if (!this.checkRes(res)) {
-                                    return
-                                }
-                                document.getElementById("buyResults").style.display = "block";
-
-                                const instanceIDLabel = document.getElementById('InstanceId');
-                                instanceIDLabel.innerHTML = res.data.data.InstanceId;
-                                const orderIDLabel = document.getElementById('OrderId');
-                                orderIDLabel.innerHTML = res.data.data.OrderId;
-                                const requestIDLabel = document.getElementById('RequestId');
-                                requestIDLabel.innerHTML = res.data.data.RequestId;
-                                const tradePriceLabel = document.getElementById('TradePrice');
-                                tradePriceLabel.innerHTML = res.data.data.TradePrice;
-                            }).catch((error) => {
-                                console.error('Error:', error);
-                            });
-                    })
+                        }).catch((error) => {
+                            console.error('Error:', error);
+                        });
                 },
 
                 showLoading () {
                     document.getElementById("createLoader").style.display = "block";
+                    setTimeout(this.hideLoading, 5 * 1000);
                 },
 
                 hideLoading () {

@@ -21,8 +21,9 @@ type DescribePriceResponse struct {
 }
 
 type CreateInstanceResponse struct {
-	InstanceId string
-	OrderId    string
-	RequestId  string
-	TradePrice float32
+	InstanceId      string
+	OrderId         string
+	RequestId       string
+	TradePrice      float32
+	PublicIpAddress string
 }
