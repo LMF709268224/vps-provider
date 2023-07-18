@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"vps-provider/utils"
 
@@ -64,14 +65,14 @@ func createInstance(c *gin.Context) {
 
 	fmt.Println("securityGroupID : ", securityGroupID)
 
-	result, err := services.RunInstances(regionID, instanceType, imageID, password, securityGroupID, periodUnit, period)
+	result, err := services.CreateInstance(regionID, instanceType, imageID, password, securityGroupID, periodUnit, period)
 	if err != nil {
 		data := utils.StrToMap(*err.Data)
 		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
 			"msg":     err.Code,
 			"details": data["Message"],
 		}))
-		fmt.Println("RunInstances err:", err.Error())
+		fmt.Println("CreateInstance err:", err.Error())
 		return
 	}
 
@@ -88,10 +89,12 @@ func createInstance(c *gin.Context) {
 	}
 
 	// 一分钟后调用
-	// err = services.StartInstance(regionID, result.InstanceId)
-	// if err != nil {
-	// 	fmt.Println("StartInstance err:", err.Error())
-	// }
+	go func() {
+		time.Sleep(1 * time.Minute)
+
+		err := services.StartInstance(regionID, result.InstanceId)
+		fmt.Println("StartInstance err:", err)
+	}()
 
 	c.JSON(http.StatusOK, respJSON(http.StatusOK, result))
 }
