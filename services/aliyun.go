@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"vps-provider/config"
 	"vps-provider/types"
 
@@ -36,16 +34,17 @@ func newClient(regionId string) (*ecs20140526.Client, *tea.SDKError) {
 		AccessKeySecret: tea.String(config.Cfg.AliyunAccessKeySecret),
 	}
 
-	var endpoint string
+	// var endpoint string
 
-	switch regionId {
-	case "cn-hangzhou":
-		endpoint = fmt.Sprintf("ecs-%s.aliyuncs.com", regionId)
-	default:
-		endpoint = fmt.Sprintf("ecs.%s.aliyuncs.com", regionId)
-	}
+	// switch regionId {
+	// case "cn-hangzhou":
+	// 	endpoint = fmt.Sprintf("ecs-%s.aliyuncs.com", regionId)
+	// default:
+	// 	endpoint = fmt.Sprintf("ecs.%s.aliyuncs.com", regionId)
+	// }
 
-	configClient.Endpoint = tea.String(endpoint)
+	// configClient.Endpoint = tea.String(endpoint)
+	configClient.RegionId = tea.String(regionId)
 
 	client, err := ecs20140526.NewClient(configClient)
 	if err != nil {

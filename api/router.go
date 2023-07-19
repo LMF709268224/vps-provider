@@ -72,7 +72,7 @@ func configRouter(router *gin.Engine, cfg config.Config) {
 	apiV1.GET("/describe_instance_type", describeRecommendInstanceType)
 	apiV1.GET("/describe_images", describeImages)
 	apiV1.GET("/describe_regions", describeRegions)
-	apiV1.GET("/create_security_group", createSecurityGroup)
+	// apiV1.GET("/create_security_group", createSecurityGroup)
 	apiV1.GET("/create_instance", createInstance)
 	// apiV1.Use(authMiddleware.MiddlewareFunc())
 	// apiV1.GET("/refresh_token", authMiddleware.RefreshHandler)

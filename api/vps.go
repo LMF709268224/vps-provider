@@ -115,7 +115,6 @@ func describeRecommendInstanceType(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("DescribeRecommendInstanceType rsp:", rsp)
 	resources := make(map[string]string)
 	for _, data := range rsp.Body.Data.RecommendInstanceType {
 		instanceType := data.InstanceType.InstanceType
@@ -158,20 +157,20 @@ func describeImages(c *gin.Context) {
 	c.JSON(http.StatusOK, respJSON(http.StatusOK, rpsData))
 }
 
-func createSecurityGroup(c *gin.Context) {
-	regionID := c.Query("regionId")
-	rsp, err := services.CreateSecurityGroup(regionID)
-	if err != nil {
-		data := utils.StrToMap(*err.Data)
-		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
-			"msg":     err.Code,
-			"details": data["Message"],
-		}))
-		return
-	}
+// func createSecurityGroup(c *gin.Context) {
+// 	regionID := c.Query("regionId")
+// 	rsp, err := services.CreateSecurityGroup(regionID)
+// 	if err != nil {
+// 		data := utils.StrToMap(*err.Data)
+// 		c.JSON(http.StatusOK, respJSON(*err.StatusCode, jsonObject{
+// 			"msg":     err.Code,
+// 			"details": data["Message"],
+// 		}))
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, respJSON(http.StatusOK, rsp))
-}
+// 	c.JSON(http.StatusOK, respJSON(http.StatusOK, rsp))
+// }
 
 func describeAvailableResource(c *gin.Context) {
 	regionID := c.Query("regionId")
