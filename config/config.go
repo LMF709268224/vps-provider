@@ -7,21 +7,8 @@ var Cfg Config
 type Config struct {
 	Mode                  string
 	APIListen             string
-	DatabaseURL           string
 	SecretKey             string
-	RedisAddr             string
-	RedisPassword         string
-	Email                 EmailConfig
 	DryRun                bool
 	AliyunAccessKeyID     string
 	AliyunAccessKeySecret string
-}
-
-// EmailConfig email
-type EmailConfig struct {
-	Name     string
-	SMTPHost string
-	SMTPPort string
-	Username string
-	Password string
 }

@@ -86,6 +86,8 @@ func CreateInstance(regionId, instanceType, imageId, password, securityGroupId, 
 		Password:                tea.String(password),
 		InternetMaxBandwidthOut: tea.Int32(1),
 		InternetMaxBandwidthIn:  tea.Int32(1),
+		// TODO
+		SystemDisk: &ecs20140526.CreateInstanceRequestSystemDisk{Size: tea.Int32(20)},
 	}
 
 	runtime := &util.RuntimeOptions{}
